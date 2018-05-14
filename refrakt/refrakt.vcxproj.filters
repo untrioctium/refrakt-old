@@ -13,11 +13,14 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="Source Files\ImGui">
-      <UniqueIdentifier>{926bc75d-21a7-49f7-8e4c-0d87286e5b09}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\extern">
       <UniqueIdentifier>{3d2079ce-67ea-411d-8cc1-e1eec74a78ff}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\extern">
+      <UniqueIdentifier>{f26f4e8b-06f5-45b2-86d6-288b426a0f53}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\extern\ImGui">
+      <UniqueIdentifier>{926bc75d-21a7-49f7-8e4c-0d87286e5b09}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -28,16 +31,19 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="extern\imgui.cpp">
-      <Filter>Source Files\ImGui</Filter>
+      <Filter>Source Files\extern\ImGui</Filter>
     </ClCompile>
     <ClCompile Include="extern\imgui_demo.cpp">
-      <Filter>Source Files\ImGui</Filter>
+      <Filter>Source Files\extern\ImGui</Filter>
     </ClCompile>
     <ClCompile Include="extern\imgui_draw.cpp">
-      <Filter>Source Files\ImGui</Filter>
+      <Filter>Source Files\extern\ImGui</Filter>
     </ClCompile>
     <ClCompile Include="extern\imgui-SFML.cpp">
-      <Filter>Source Files\ImGui</Filter>
+      <Filter>Source Files\extern\ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="extern\RtMidi.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -73,6 +79,9 @@
     </ClInclude>
     <ClInclude Include="GLtypes.hpp">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="extern\RtMidi.h">
+      <Filter>Header Files\extern</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

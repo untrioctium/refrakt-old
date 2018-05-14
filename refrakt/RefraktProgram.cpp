@@ -36,32 +36,54 @@ std::shared_ptr<RefraktProgram> RefraktProgram::load(std::string program_name)
 
 void RefraktProgram::loadBindings(sol::state& state)
 {
+	auto imgui_vec_binder = [&state](auto name, auto v, auto imgui_function, std::string default_format) {
+		using vec_type = decltype(v);
+		using vec_elem_type = decltype(vec_type::x);
+
+		state[name]["gui"] = [imgui_function, default_format](vec_type& self, const sol::table& p) {
+			auto ret = imgui_function(p["name"].get<const char*>(),
+				&self.x, p["bounds"]["min"], p["bounds"]["max"],
+				p["format"].get_or<std::string>(default_format).c_str(),
+				p["power"].get_or((vec_elem_type)1));
+
+			if (p["tool_tip"].valid()) {
+				ImGui::SameLine();
+				ImGui::TextDisabled("(?)");
+				if (ImGui::IsItemHovered())
+				{
+					ImGui::BeginTooltip();
+					ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
+					ImGui::TextUnformatted(p["tool_tip"].get<std::string>().c_str());
+					ImGui::PopTextWrapPos();
+					ImGui::EndTooltip();
+				}
+			}
+
+			return ret;
+		};
+	};
 
 	/* vec2 bindings */ {
+		// Generic bind function for any 2-element vector
+		// v is only used to deduce types
 		auto bind = [&state](std::string name, auto v) {
-			using v_name = decltype(v);
-			using v_type = decltype(v_name::x);
+			using vec_name = decltype(v);
+			using vec_type = decltype(vec_name::x);
 
-			state.new_usertype<v_name>(name,
-				sol::call_constructor, sol::constructors<v_name(), v_name(v_type), v_name(v_type, v_type)>(),
-				"x", &v_name::x,
-				"y", &v_name::y
+			state.new_usertype<vec_name>(name,
+				sol::call_constructor, sol::constructors<vec_name(), vec_name(vec_type), vec_name(vec_type, vec_type)>(),
+				"x", &vec_name::x,
+				"y", &vec_name::y
 				);
 		};
 
 		bind("vec2", vec2());
-		state["vec2"]["imgui"] = [](vec2& self, const sol::table& p) {
-			return ImGui::SliderFloat2(p["name"].get<const char*>(), 
-				&self.x,
-				p["bounds"]["min"], 
-				p["bounds"]["max"],
-				p["format"].get_or<std::string>("%.3f").c_str(),
-				p["power"].get_or(1.0f)
-			);
-		};
+		imgui_vec_binder("vec2", vec2(), ImGui::SliderFloat2, "%.3f");
 
 		bind("dvec2", dvec2() );
 		bind("ivec2", ivec2() );
+		//imgui_vec_binder("vec2", vec2(), ImGui::SliderInt2, "%d");
+
 		bind("uvec2", uvec2() );
 		bind("bvec2", bvec2() );
 	}
@@ -79,6 +101,7 @@ void RefraktProgram::loadBindings(sol::state& state)
 		};
 
 		bind("vec3", vec3());
+		imgui_vec_binder("vec3", vec3(), ImGui::SliderFloat3, "%.3f");
 		bind("dvec3", dvec3());
 		bind("ivec3", ivec3());
 		bind("uvec3", uvec3());

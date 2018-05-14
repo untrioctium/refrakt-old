@@ -71,6 +71,8 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <IncludePath>$(IncludePath);</IncludePath>
+    <CodeAnalysisRuleSet>NativeRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <RunCodeAnalysis>false</RunCodeAnalysis>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -88,6 +90,7 @@
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(PROJECTDIR)lib\glew-2.1.0\include;$(PROJECTDIR)extern;$(PROJECTDIR)lib\lua\include;$(PROJECTDIR)lib\SFML-2.4.2\include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>GLEW_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <EnablePREfast>false</EnablePREfast>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(PROJECTDIR)lib\glew-2.1.0\lib\Release\x64;$(PROJECTDIR)lib\SFML-2.4.2\lib;$(PROJECTDIR)lib\lua;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
@@ -127,6 +130,7 @@
     <ClCompile Include="extern\imgui.cpp" />
     <ClCompile Include="extern\imgui_demo.cpp" />
     <ClCompile Include="extern\imgui_draw.cpp" />
+    <ClCompile Include="extern\RtMidi.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="RefraktProgram.cpp" />
   </ItemGroup>
@@ -137,6 +141,7 @@
     <ClInclude Include="extern\imgui.h" />
     <ClInclude Include="extern\imgui_internal.h" />
     <ClInclude Include="extern\json.hpp" />
+    <ClInclude Include="extern\RtMidi.h" />
     <ClInclude Include="extern\stb_rect_pack.h" />
     <ClInclude Include="extern\stb_textedit.h" />
     <ClInclude Include="extern\stb_truetype.h" />

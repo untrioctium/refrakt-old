@@ -47,7 +47,7 @@ int main( int argc, char** argv )
     auto pgm = RefraktProgram::load("escape.lua");
 
 	pgm->lua_state.script("lol = vec2(3.0)");
-	pgm->lua_state.script("format = {name = 'lol', bounds={min=0.0, max=5.0}}");
+	pgm->lua_state.script("format = {name = 'lol', bounds={min=0.0, max=5.0}, tool_tip='this is a dang tool tip'}");
 
     char cmd_buf[256] = {'\0'};
 
@@ -65,6 +65,7 @@ int main( int argc, char** argv )
 				return 0;
             }
         }
+		window.clear();
 
         ImGui::SFML::Update(window, deltaClock.restart());
         ImGui::ShowTestWindow();
@@ -86,7 +87,7 @@ int main( int argc, char** argv )
         }
         ImGui::End();
 
-		pgm->lua_state.script("lol:imgui( format )");
+		pgm->lua_state.script("lol:gui( format )");
 
 		window.pushGLStates();
 		ImGui::SFML::Render(window);
