@@ -1,0 +1,7 @@
+{
+  "program_name": "Mandelbrot",
+  "author": "Alex Riley <alex@refrakt.io>",
+  "version": "0.0.1",
+  "description": "Generates animated images of Mandelbrot-style fractals",
+  "program_file": "mandelbrot.lua"
+}
