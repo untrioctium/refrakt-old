@@ -43,7 +43,7 @@
       <Filter>Source Files\extern\ImGui</Filter>
     </ClCompile>
     <ClCompile Include="extern\RtMidi.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\extern</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
