@@ -64,29 +64,36 @@ void RefraktProgram::loadBindings(sol::state& state)
 		};
 	};
 
+	auto base_vec_bind = [&state](std::string name, auto v, auto ...members) {
+		using vec_name = decltype(v);
+		using vec_type = decltype(vec_name::x);
+
+		state.new_usertype<vec_name>(name,
+			sol::call_constructor, sol::constructors<vec_name(), vec_name(vec_type), vec_name::unique_constructor>(),
+			members...);
+	};
+
+
 	/* vec2 bindings */ {
 		// Generic bind function for any 2-element vector
 		// v is only used to deduce types
-		auto bind = [&state](std::string name, auto v) {
+		auto vec2_bind = [&base_vec_bind](std::string name, auto v) {
 			using vec_name = decltype(v);
-			using vec_type = decltype(vec_name::x);
 
-			state.new_usertype<vec_name>(name,
-				sol::call_constructor, sol::constructors<vec_name(), vec_name(vec_type), vec_name(vec_type, vec_type)>(),
+			base_vec_bind(name, v,
 				"x", &vec_name::x,
-				"y", &vec_name::y
-				);
+				"y", &vec_name::y);
 		};
 
-		bind("vec2", vec2());
+		vec2_bind("vec2", vec2());
 		imgui_vec_binder("vec2", vec2(), ImGui::SliderFloat2, "%.3f");
 
-		bind("dvec2", dvec2() );
-		bind("ivec2", ivec2() );
+		vec2_bind("dvec2", dvec2() );
+		vec2_bind("ivec2", ivec2() );
 		//imgui_vec_binder("vec2", vec2(), ImGui::SliderInt2, "%d");
 
-		bind("uvec2", uvec2() );
-		bind("bvec2", bvec2() );
+		vec2_bind("uvec2", uvec2() );
+		vec2_bind("bvec2", bvec2() );
 	}
 	/* vec3 bindings */ {
 		auto bind = [&state](std::string name, auto v) {
