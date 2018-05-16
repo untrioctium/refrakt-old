@@ -25,6 +25,7 @@ std::shared_ptr<RefraktProgram> RefraktProgram::load(std::string program_name)
 	ptr->lua_state.open_libraries(sol::lib::base, sol::lib::io);
 	RefraktProgram::loadBindings(ptr->lua_state);
 
+	// TODO: Error handling 
 	sol::table defines = ptr->lua_state.script_file(package_file.string());
 
 	defines["parameters"].get<sol::table>().for_each([](sol::object const& key, sol::object const& value) {

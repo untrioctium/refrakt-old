@@ -11,6 +11,8 @@
 #include <string>
 #include <fstream>
 
+#include "GLtypes.hpp"
+
 #include "RefraktProgram.hpp"
 
 using json = nlohmann::json;
@@ -137,6 +139,8 @@ int main( int argc, char** argv )
     char cmd_buf[256] = {'\0'};
 
 	int frame = 0;
+
+	std::cout << sizeof(dvec2) << std::endl;
 
     sf::Clock deltaClock;
     while (window.isOpen()) {

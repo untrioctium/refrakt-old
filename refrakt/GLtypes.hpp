@@ -2,11 +2,9 @@
 
 template<typename T> struct base_vec2 {
 	T x, y;
-
 	base_vec2() {}
 	base_vec2(T X, T Y) : x(X), y(Y) {}
 	base_vec2(T val) : base_vec2(val, val) {}
-
 };
 
 template<typename T> struct base_vec3 {
@@ -25,20 +23,24 @@ template<typename T> struct base_vec4 {
 	base_vec4(T val) : base_vec4(val, val, val, val) {}
 };
 
-using vec2 = base_vec2<float>;
-using ivec2 = base_vec2<int>;
-using uvec2 = base_vec2<unsigned int>;
-using dvec2 = base_vec2<double>;
-using bvec2 = base_vec2<bool>;
+#define USING_WITH_STATIC_SIZE( clsname, prefix, type, expected ) \
+	using prefix##clsname = base_##clsname<type>; \
+	static_assert( sizeof(prefix##clsname) * 8 == expected, "size mismatch for '" #prefix #clsname "' (expected " #expected ")" );
 
-using vec3 = base_vec3<float>;
-using ivec3 = base_vec3<int>;
-using uvec3 = base_vec3<unsigned int>;
-using dvec3 = base_vec3<double>;
-using bvec3 = base_vec3<bool>;
+USING_WITH_STATIC_SIZE(vec2,  , float, 64)
+USING_WITH_STATIC_SIZE(vec2, i, int, 64)
+USING_WITH_STATIC_SIZE(vec2, u, unsigned int, 64)
+USING_WITH_STATIC_SIZE(vec2, d, double, 128)
+USING_WITH_STATIC_SIZE(vec2, b, bool, 16)
 
-using vec4 = base_vec4<float>;
-using ivec4 = base_vec4<int>;
-using uvec4 = base_vec4<unsigned int>;
-using dvec4 = base_vec4<double>;
-using bvec4 = base_vec4<bool>;
+USING_WITH_STATIC_SIZE(vec3,  , float, 96)
+USING_WITH_STATIC_SIZE(vec3, i, int, 96)
+USING_WITH_STATIC_SIZE(vec3, u, unsigned int, 96)
+USING_WITH_STATIC_SIZE(vec3, d, double, 192)
+USING_WITH_STATIC_SIZE(vec3, b, bool, 24)
+
+USING_WITH_STATIC_SIZE(vec4,  , float, 128)
+USING_WITH_STATIC_SIZE(vec4, i, int, 128)
+USING_WITH_STATIC_SIZE(vec4, u, unsigned int, 128)
+USING_WITH_STATIC_SIZE(vec4, d, double, 256)
+USING_WITH_STATIC_SIZE(vec4, b, bool, 32)

@@ -22,6 +22,9 @@
     <Filter Include="Source Files\extern\ImGui">
       <UniqueIdentifier>{926bc75d-21a7-49f7-8e4c-0d87286e5b09}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Lua">
+      <UniqueIdentifier>{79c06a83-1354-4d31-975a-c2d10b8783c9}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -83,5 +86,10 @@
     <ClInclude Include="extern\RtMidi.h">
       <Filter>Header Files\extern</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\programs\escape.lua">
+      <Filter>Lua</Filter>
+    </None>
   </ItemGroup>
 </Project>
