@@ -1,4 +1,5 @@
 #pragma once
+#include <variant>
 
 // inheritable struct template that signifies the child
 // should always have a constant size in bytes
@@ -6,70 +7,88 @@ template<std::size_t s> struct const_sized {
 	static constexpr std::size_t type_size = s;
 };
 
+// checks to see if a type is const_sized or a basic integral type
+// is_const_sized<vec2>::value is true, but is_const_sized<std::string>::value is false
 template<typename T> struct is_const_sized {
 private:
 	template<std::size_t s>
 	static std::true_type test(const_sized<s> v) { return std::true_type(); };
-	static std::false_type test(...) { return std::false_type();  };
+	static std::false_type test(...) { return std::false_type(); };
 
 public:
 	static constexpr bool value = std::is_integral_v<T> || decltype(is_const_sized::test(T()))::value;
 };
 
-template<typename T> struct vec2_base: public const_sized<sizeof(T) * 2> {
-	T x, y;
-	
-	vec2_base() {}
-	vec2_base(T X, T Y) : x(X), y(Y) {}
-	vec2_base(T val) : vec2_base(val, val) {}
-
-	using unique_constructor = vec2_base<T>(T,T);
+// specialized overload because std::float_t does not return true with is_integral_v
+template<> struct is_const_sized<std::float_t> {
+	static constexpr bool value = true;
 };
 
-template<typename T> struct vec3_base {
-	T x, y, z;
-
-	vec3_base() {}
-	vec3_base(T X, T Y, T Z) : x(X), y(Y), z(Z) {}
-	vec3_base(T val) : vec3_base(val, val, val) {}
-
-	using unique_constructor = vec3_base<T>(T, T, T);
-	static constexpr std::size_t type_size = sizeof(T) * 3;
+// specialized overload because std::double_t does not return true with is_integral_v
+template<> struct is_const_sized<std::double_t> {
+	static constexpr bool value = true;
 };
 
-template<typename T> struct vec4_base {
-	T x, y, z, w;
+template<typename T, std::size_t s> struct ConstSizeArray : public const_sized<sizeof(T) * s> {
+public:
+	T & operator[](std::size_t index) { return *(data_ + index); }
+	T* operator&() { return data_; }
 
-	vec4_base() {}
-	vec4_base(T X, T Y, T Z, T W) : x(X), y(Y), z(Z), w(W) {}
-	vec4_base(T val) : vec4_base(val, val, val, val) {}
+	ConstSizeArray() {}
+	ConstSizeArray(T init) { for (std::size_t index = 0; index < len; index++) data_[index] = init;}
+	ConstSizeArray(std::initializer_list<T> l) { for (std::size_t index = 0; index < len; i++) data_[index] = l[index]; }
 
-	using unique_constructor = vec4_base<T>(T, T, T, T);
-	static constexpr std::size_t type_size = sizeof(T) * 4;
+	template<std::size_t index> T get() { return data_[index]; }
+	template<std::size_t index> void set(const T value) { data_[index] = value; }
+
+	static constexpr std::size_t len = s;
+	typedef T stored_type;
+
+private:
+	T data_[s];
 };
 
-// macro to create templated types with enforced expected size
-#define USING_WITH_STATIC_SIZE( type, templ, expected ) \
-	using type = templ; \
-	static_assert( sizeof(type) == expected && type::type_size == expected, "size mismatch for '" #type "' (expected " #expected ")" );
+#define USING_WITH_STATIC_ASSERT( name, t, size, expected ) \
+	using name = ConstSizeArray<t, size>; \
+	static_assert( is_const_sized<t>::value, "'" #name "' groups a non-const_sized type '" #t "'"); \
+	static_assert( is_const_sized<name>::value, "'" #name "' does not inherit const_sized"); \
+	static_assert( sizeof(name) == name::type_size, "internal size mismatch for '" #name "'"); \
+	static_assert( name::type_size == expected, "size mismatch for '" #name "' (expected " #expected ")");
 
-USING_WITH_STATIC_SIZE(vec2, vec2_base<std::float_t>, 8)
-USING_WITH_STATIC_SIZE(dvec2, vec2_base<std::double_t>, 16)
-USING_WITH_STATIC_SIZE(ivec2, vec2_base<std::int32_t>, 8)
-USING_WITH_STATIC_SIZE(uvec2, vec2_base<std::uint32_t>, 8)
-USING_WITH_STATIC_SIZE(bvec2, vec2_base<bool>, 2)
+USING_WITH_STATIC_ASSERT(vec2, std::float_t, 2, 8)
+USING_WITH_STATIC_ASSERT(dvec2, std::double_t, 2, 16)
+USING_WITH_STATIC_ASSERT(ivec2, std::int32_t, 2, 8)
+USING_WITH_STATIC_ASSERT(uvec2, std::uint32_t, 2, 8)
+USING_WITH_STATIC_ASSERT(bvec2, bool, 2, 2)
 
-USING_WITH_STATIC_SIZE(vec3, vec3_base<std::float_t>, 12)
-USING_WITH_STATIC_SIZE(dvec3, vec3_base<std::double_t>, 24)
-USING_WITH_STATIC_SIZE(ivec3, vec3_base<std::int32_t>, 12)
-USING_WITH_STATIC_SIZE(uvec3, vec3_base<std::uint32_t>, 12)
-USING_WITH_STATIC_SIZE(bvec3, vec3_base<bool>, 3)
+USING_WITH_STATIC_ASSERT(vec3, std::float_t, 3, 12)
+USING_WITH_STATIC_ASSERT(dvec3, std::double_t, 3, 24)
+USING_WITH_STATIC_ASSERT(ivec3, std::int32_t, 3, 12)
+USING_WITH_STATIC_ASSERT(uvec3, std::uint32_t, 3, 12)
+USING_WITH_STATIC_ASSERT(bvec3, bool, 3, 3)
 
-USING_WITH_STATIC_SIZE(vec4, vec4_base<std::float_t>, 16)
-USING_WITH_STATIC_SIZE(dvec4, vec4_base<std::double_t>, 32)
-USING_WITH_STATIC_SIZE(ivec4, vec4_base<std::int32_t>, 16)
-USING_WITH_STATIC_SIZE(uvec4, vec4_base<std::uint32_t>, 16)
-USING_WITH_STATIC_SIZE(bvec4, vec4_base<bool>, 4)
+USING_WITH_STATIC_ASSERT(vec4, std::float_t, 4, 16)
+USING_WITH_STATIC_ASSERT(dvec4, std::double_t, 4, 32)
+USING_WITH_STATIC_ASSERT(ivec4, std::int32_t, 4, 16)
+USING_WITH_STATIC_ASSERT(uvec4, std::uint32_t, 4, 16)
+USING_WITH_STATIC_ASSERT(bvec4, bool, 4, 4)
 
-static_assert(is_const_sized<vec2>::value, "vec2 is not const sized!");
-static_assert(is_const_sized<std::string>::value == false, "std::string shouldn't be const sized");
+USING_WITH_STATIC_ASSERT(mat2x2, vec2, 2, 16)
+USING_WITH_STATIC_ASSERT(mat2x3, vec2, 3, 24)
+USING_WITH_STATIC_ASSERT(mat2x4, vec2, 4, 32)
+USING_WITH_STATIC_ASSERT(mat3x2, vec3, 2, 24)
+USING_WITH_STATIC_ASSERT(mat3x3, vec3, 3, 36)
+USING_WITH_STATIC_ASSERT(mat3x4, vec3, 4, 48)
+USING_WITH_STATIC_ASSERT(mat4x2, vec4, 2, 32)
+USING_WITH_STATIC_ASSERT(mat4x3, vec4, 3, 48)
+USING_WITH_STATIC_ASSERT(mat4x4, vec4, 4, 64)
+
+USING_WITH_STATIC_ASSERT(dmat2x2, dvec2, 2, 32)
+USING_WITH_STATIC_ASSERT(dmat2x3, dvec2, 3, 48)
+USING_WITH_STATIC_ASSERT(dmat2x4, dvec2, 4, 64)
+USING_WITH_STATIC_ASSERT(dmat3x2, dvec3, 2, 48)
+USING_WITH_STATIC_ASSERT(dmat3x3, dvec3, 3, 72)
+USING_WITH_STATIC_ASSERT(dmat3x4, dvec3, 4, 96)
+USING_WITH_STATIC_ASSERT(dmat4x2, dvec4, 2, 64)
+USING_WITH_STATIC_ASSERT(dmat4x3, dvec4, 3, 96)
+USING_WITH_STATIC_ASSERT(dmat4x4, dvec4, 4, 128)

@@ -32,6 +32,10 @@ std::shared_ptr<RefraktProgram> RefraktProgram::load(std::string program_name)
 		value.get_type();
 	});
 
+	//ivec2 test(4, 5);
+	//test[0] = 3;
+	//std::cout << test[0] << std::endl;
+
 	return ptr;
 }
 
@@ -64,75 +68,105 @@ void RefraktProgram::loadBindings(sol::state& state)
 		};
 	};
 
-	auto base_vec_bind = [&state](std::string name, auto v, auto ...members) {
-		using vec_name = decltype(v);
-		using vec_type = decltype(vec_name::x);
+	auto base_array_bind = [&state](std::string name, auto a, auto ...members) {
+		using arr_name = decltype(a);
+		using arr_type = decltype(a.get<0>());
 
-		state.new_usertype<vec_name>(name,
-			sol::call_constructor, sol::constructors<vec_name(), vec_name(vec_type), vec_name::unique_constructor>(),
+		auto factories = sol::factories(
+			[]() { return arr_name(); }, // empty factory
+			[](arr_type init) { return arr_name(init); }, // single initializer
+			[](sol::variadic_args va) {
+				if (va.size() != arr_name::len) throw sol::error("error creating array");
+
+				auto result = arr_name();
+				for (std::size_t i = 0; i < arr_name::len; i++) result[i] = va[i].get<arr_type>();
+				return result;
+			}
+		);
+
+		state.new_usertype<arr_name>(name,
+			sol::call_constructor, factories,
+			sol::meta_function::index, [](arr_name& a, std::size_t index) -> decltype(a[index]) { return a[index]; },
+			sol::meta_function::new_index, [](arr_name& a, std::size_t index, arr_type v) { a[index] = v; },
 			members...);
 	};
-
-
-	/* vec2 bindings */ {
-		// Generic bind function for any 2-element vector
-		// v is only used to deduce types
-		auto vec2_bind = [&base_vec_bind](std::string name, auto v) {
+	/* vec2 bindings */{
+		auto vec2_bind = [&base_array_bind](std::string name, auto v) {
 			using vec_name = decltype(v);
 
-			base_vec_bind(name, v,
-				"x", &vec_name::x,
-				"y", &vec_name::y);
+			base_array_bind(name, v,
+				"x", sol::property(&vec_name::get<0>, &vec_name::set<0>),
+				"y", sol::property(&vec_name::get<1>, &vec_name::set<1>)
+			);
 		};
 
 		vec2_bind("vec2", vec2());
-		imgui_vec_binder("vec2", vec2(), ImGui::SliderFloat2, "%.3f");
-
-		vec2_bind("dvec2", dvec2() );
-		vec2_bind("ivec2", ivec2() );
-		//imgui_vec_binder("vec2", vec2(), ImGui::SliderInt2, "%d");
-
-		vec2_bind("uvec2", uvec2() );
-		vec2_bind("bvec2", bvec2() );
+		vec2_bind("dvec2", dvec2());
+		vec2_bind("ivec2", ivec2());
+		vec2_bind("uvec2", uvec2());
+		vec2_bind("bvec2", bvec2());
 	}
+
 	/* vec3 bindings */ {
-		auto bind = [&state](std::string name, auto v) {
-			using v_name = decltype(v);
-			using v_type = decltype(v_name::x);
+		auto vec3_bind = [&base_array_bind](std::string name, auto v) {
+			using vec_name = decltype(v);
 
-			state.new_usertype<v_name>(name,
-				sol::call_constructor, sol::constructors<v_name(), v_name(v_type), v_name(v_type, v_type, v_type)>(),
-				"x", &v_name::x,
-				"y", &v_name::y,
-				"z", &v_name::z
-				);
+			base_array_bind(name, v,
+				"x", sol::property(&vec_name::get<0>, &vec_name::set<0>),
+				"y", sol::property(&vec_name::get<1>, &vec_name::set<1>),
+				"z", sol::property(&vec_name::get<2>, &vec_name::set<2>)
+			);
 		};
 
-		bind("vec3", vec3());
-		imgui_vec_binder("vec3", vec3(), ImGui::SliderFloat3, "%.3f");
-		bind("dvec3", dvec3());
-		bind("ivec3", ivec3());
-		bind("uvec3", uvec3());
-		bind("bvec3", bvec3());
+		vec3_bind("vec3", vec3());
+		vec3_bind("dvec3", dvec3());
+		vec3_bind("ivec3", ivec3());
+		vec3_bind("uvec3", uvec3());
+		vec3_bind("bvec3", bvec3());
 	}
-	/* vec4 bindings */ {
-		auto bind = [&state](std::string name, auto v) {
-			using v_name = decltype(v);
-			using v_type = decltype(v_name::x);
 
-			state.new_usertype<v_name>(name,
-				sol::call_constructor, sol::constructors<v_name(), v_name(v_type), v_name(v_type, v_type, v_type, v_type)>(),
-				"x", &v_name::x,
-				"y", &v_name::y,
-				"z", &v_name::z,
-				"w", &v_name::w
-				);
+	/* vec4 bindings */ {
+		auto vec4_bind = [&base_array_bind](std::string name, auto v) {
+			using vec_name = decltype(v);
+
+			base_array_bind(name, v,
+				"x", sol::property(&vec_name::get<0>, &vec_name::set<0>),
+				"y", sol::property(&vec_name::get<1>, &vec_name::set<1>),
+				"z", sol::property(&vec_name::get<2>, &vec_name::set<2>),
+				"w", sol::property(&vec_name::get<3>, &vec_name::set<3>)
+			);
 		};
 
-		bind("vec4", vec4());
-		bind("dvec4", dvec4());
-		bind("ivec4", ivec4());
-		bind("uvec4", uvec4());
-		bind("bvec4", bvec4());
+		vec4_bind("vec4", vec4());
+		vec4_bind("dvec4", dvec4());
+		vec4_bind("ivec4", ivec4());
+		vec4_bind("uvec4", uvec4());
+		vec4_bind("bvec4", bvec4());
+	}
+	
+	/* matrix bindings */ {
+		base_array_bind("mat2x2", mat2x2());
+		base_array_bind("mat2x3", mat2x3());
+		base_array_bind("mat2x4", mat2x4());
+
+		base_array_bind("mat3x2", mat3x2());
+		base_array_bind("mat3x3", mat3x3());
+		base_array_bind("mat3x4", mat3x4());
+
+		base_array_bind("mat4x2", mat4x2());
+		base_array_bind("mat4x3", mat4x3());
+		base_array_bind("mat4x4", mat4x4());
+
+		base_array_bind("dmat2x2", dmat2x2());
+		base_array_bind("dmat2x3", dmat2x3());
+		base_array_bind("dmat2x4", dmat2x4());
+
+		base_array_bind("dmat3x2", dmat3x2());
+		base_array_bind("dmat3x3", dmat3x3());
+		base_array_bind("dmat3x4", dmat3x4());
+
+		base_array_bind("dmat4x2", dmat4x2());
+		base_array_bind("dmat4x3", dmat4x3());
+		base_array_bind("dmat4x4", dmat4x4());
 	}
 }

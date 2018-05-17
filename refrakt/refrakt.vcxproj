@@ -91,6 +91,9 @@
       <AdditionalIncludeDirectories>$(PROJECTDIR)lib\glew-2.1.0\include;$(PROJECTDIR)extern;$(PROJECTDIR)lib\lua\include;$(PROJECTDIR)lib\SFML-2.4.2\include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>GLEW_STATIC;__WINDOWS_MM__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <EnablePREfast>false</EnablePREfast>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(PROJECTDIR)lib\glew-2.1.0\lib\Release\x64;$(PROJECTDIR)lib\SFML-2.4.2\lib;$(PROJECTDIR)lib\rtmidi;$(PROJECTDIR)lib\lua;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
