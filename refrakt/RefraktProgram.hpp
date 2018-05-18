@@ -8,6 +8,10 @@ public:
 
   sol::state& getLuaState() { return lua_state_; };
 
+  template<typename T> T& get(const std::string& parameter) {
+	  return parameters_[parameter]["value"].get<T&>();
+  }
+
   void drawGui();
 
 private:

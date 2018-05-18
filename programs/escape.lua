@@ -40,7 +40,7 @@ return {
 		
 		{
 			name = "max_iterations",
-			type = "integer",
+			type = "uint32_t",
 			description = "Max iterations",
 			tool_tip = "Number of iterations before considering a point in the set",
 			bounds = {100, 1000}
@@ -48,8 +48,9 @@ return {
 		
 		{
 			name = "julia_mode",
-			type = "bool",
+			type = "vec2",
 			tool_tip = "Generate Julia sets for a point",
+			bounds = {0, 1},
 			description = "Julia Mode"
 		},
 		

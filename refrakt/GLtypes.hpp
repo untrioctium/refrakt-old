@@ -33,10 +33,16 @@ template<typename T, std::size_t s> struct ConstSizeArray : public const_sized<s
 public:
 	T & operator[](std::size_t index) { return *(data_ + index); }
 	T* operator&() { return data_; }
+	T& operator*() { return data_; }
 
 	ConstSizeArray() {}
 	ConstSizeArray(T init) { for (std::size_t index = 0; index < len; index++) data_[index] = init;}
-	ConstSizeArray(std::initializer_list<T> l) { for (std::size_t index = 0; index < len; i++) data_[index] = l[index]; }
+	ConstSizeArray(std::initializer_list<T> l) { for (std::size_t index = 0; index < len; index++) data_[index] = *(l.begin() + index); }
+
+	ConstSizeArray<T, s>& operator=(ConstSizeArray<T, s> that) {
+		for (std::size_t index = 0; index < len; index++) data_[index] = that.data_[index];
+		return *this;
+	}
 
 	template<std::size_t index> T get() { return data_[index]; }
 	template<std::size_t index> void set(const T value) { data_[index] = value; }
@@ -45,7 +51,7 @@ public:
 	typedef T stored_type;
 
 private:
-	T data_[s];
+	T data_[s] = { 0 };
 };
 
 #define USING_WITH_STATIC_ASSERT( name, t, size, expected ) \
@@ -55,6 +61,15 @@ private:
 	static_assert( sizeof(name) == name::type_size, "internal size mismatch for '" #name "'"); \
 	static_assert( name::type_size == expected, "size mismatch for '" #name "' (expected " #expected ")");
 
+// I'm going to regret this later I'm sure.
+namespace rfkt
+{
+		USING_WITH_STATIC_ASSERT(float_t, std::float_t, 1, 4)
+		USING_WITH_STATIC_ASSERT(double_t, std::double_t, 1, 8)
+		USING_WITH_STATIC_ASSERT(int32_t, std::int32_t, 1, 4)
+		USING_WITH_STATIC_ASSERT(uint32_t, std::uint32_t, 1, 4)
+		USING_WITH_STATIC_ASSERT(bool_t, bool, 1, 1)
+}
 USING_WITH_STATIC_ASSERT(vec2, std::float_t, 2, 8)
 USING_WITH_STATIC_ASSERT(dvec2, std::double_t, 2, 16)
 USING_WITH_STATIC_ASSERT(ivec2, std::int32_t, 2, 8)

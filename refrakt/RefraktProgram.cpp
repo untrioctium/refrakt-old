@@ -53,12 +53,14 @@ std::shared_ptr<RefraktProgram> RefraktProgram::load(std::string program_name)
 
 void RefraktProgram::drawGui()
 {
+	ImGui::Begin("Parameters");
 	for (auto p : this->draw_order_) {
 		std::string type = this->parameters_[p]["type"];
 		if (this->registered_types_.count(type) == 1) {
 			this->lua_state_[type]["meta"]["gui"](this->parameters_[p]["value"], this->parameters_[p]);
 		}
 	}
+	ImGui::End();
 }
 
 void RefraktProgram::loadBindings()
@@ -72,7 +74,7 @@ void RefraktProgram::loadBindings()
 			arr_type min = p["bounds"][1].get<arr_type>();
 			arr_type max = p["bounds"][2].get<arr_type>();
 
-			return ImGui::SliderScalarN(p["name"].get<const char*>(),
+			return ImGui::SliderScalarN(p["description"].get<const char*>(),
 				type, &self, arr_name::len, &min, &max,
 				p["format"].get_or<std::string>(default_format).c_str(),
 				p["power"].get_or<float>(1.0));
@@ -106,6 +108,31 @@ void RefraktProgram::loadBindings()
 
 		type_set.insert(name);
 	};
+
+	/* base type bindings */ {
+		auto simple_bind = [&base_array_bind](std::string name, auto a) {
+			using arr_name = decltype(a);
+
+			base_array_bind(name, a,
+				"v", sol::property(&arr_name::get<0>, &arr_name::set<0>)
+			);
+		};
+
+		simple_bind("float", rfkt::float_t());
+		imgui_arr_binder("float", rfkt::float_t(), ImGuiDataType_Float, "%.3f");
+
+		simple_bind("double", rfkt::double_t());
+		imgui_arr_binder("double", rfkt::double_t(), ImGuiDataType_Double, "%.6f");
+
+		simple_bind("int32", rfkt::int32_t());
+		imgui_arr_binder("int32", rfkt::int32_t(), ImGuiDataType_S32, "%d");
+
+		simple_bind("uint32", rfkt::uint32_t());
+		imgui_arr_binder("uint32", rfkt::uint32_t(), ImGuiDataType_U32, "%d");
+
+		simple_bind("bool", rfkt::bool_t());
+	}
+
 	/* vec2 bindings */{
 		auto vec2_bind = [&base_array_bind](std::string name, auto v) {
 			using vec_name = decltype(v);

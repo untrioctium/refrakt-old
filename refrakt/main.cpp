@@ -46,7 +46,7 @@ int main( int argc, char** argv )
 			settings.value<unsigned int>("height", 720)
 		),
 		"refrakt",
-		settings.value("fullscreen", false) ? sf::Style::Fullscreen : (sf::Style::Titlebar | sf::Style::Close),
+		settings.value("fullscreen", false) ? sf::Style::Fullscreen : sf::Style::Default,
 		sf::ContextSettings( // OpenGL settings
 			settings.value("/ogl/depth_buffer_bits"_json_pointer,   24), // depth buffer bits
 			settings.value("/ogl/stencil_buffer_bits"_json_pointer,  8), // stencil buffer bits
@@ -106,6 +106,8 @@ int main( int argc, char** argv )
 		pgm->drawGui();
 
 		//pgm->lua_state.script("lol:gui( format )");
+
+		pgm->get<vec2>("julia_mode") = vec2({ 2.0, 2.0 });
 
 		window.pushGLStates();
 		ImGui::SFML::Render(window);
