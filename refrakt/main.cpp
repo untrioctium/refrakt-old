@@ -66,14 +66,7 @@ int main( int argc, char** argv )
 
     auto pgm = RefraktProgram::load("escape.lua");
 
-	//pgm->lua_state.script("lol = vec2(3.0)");
-	//pgm->lua_state.script("format = {name = 'lol', bounds={min=0.0, max=5.0}, tool_tip='this is a dang tool tip'}");
-
     char cmd_buf[256] = {'\0'};
-
-	int frame = 0;
-
-	std::cout << sizeof(dvec2) << std::endl;
 
     sf::Clock deltaClock;
     while (window.isOpen()) {
@@ -109,6 +102,8 @@ int main( int argc, char** argv )
 			if( result != "nil\n" ) std::cout << result << std::endl;
         }
         ImGui::End();
+
+		pgm->drawGui();
 
 		//pgm->lua_state.script("lol:gui( format )");
 

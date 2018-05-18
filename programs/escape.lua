@@ -10,7 +10,7 @@ return {
 			type = "vec2",
 			description = "Camera center",
 			tool_tip = "Center point of the viewing window",
-			bounds = { {-1, 1}, {1, 1} }
+			bounds = { -1, 1 }
 		},
 		
 		{
@@ -27,7 +27,7 @@ return {
 			type = "vec2",
 			description = "Exponent",
 			tool_tip = "Complex exponent",
-			bounds = { {-4, -4}, {4, 4} }
+			bounds = { -4, 4 }
 		},
 		
 		{
@@ -58,15 +58,16 @@ return {
 			type = "vec2",
 			description = "Julia C",
 			tool_tip = "C for the Julia set",
-			bounds = { {-2, -2}, {2, 2} },
+			bounds = { -2, 2 },
 			depends_on = "julia_mode"
 		},
 		
 		{
 			name = "burning_ship",
-			type = "bvec2",
-			description = "Burning ship mode",
-			tool_tip = "Abs() components (both for classic 'Burning Ship' fractal)",
+			type = "vec2",
+			description = "Burning ship weights",
+			bounds = {0, 1},
+			tool_tip = "Abs() weight on components (both 1.0 for classic 'Burning Ship' fractal)",
 			child_names = {"Re", "Im"}
 		}
 	},
