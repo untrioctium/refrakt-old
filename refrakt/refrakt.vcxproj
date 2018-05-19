@@ -96,7 +96,7 @@
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>$(PROJECTDIR)lib\glew-2.1.0\lib\Release\x64;$(PROJECTDIR)lib\SFML-2.4.2\lib;$(PROJECTDIR)lib\rtmidi;$(PROJECTDIR)lib\lua;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(PROJECTDIR)lib\glew-2.1.0\lib\;$(PROJECTDIR)lib\SFML-2.4.2\lib;$(PROJECTDIR)lib\rtmidi;$(PROJECTDIR)lib\lua;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>opengl32.lib;glu32.lib;glew32s.lib;sfml-graphics.lib;sfml-window.lib;sfml-system.lib;lua53.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>

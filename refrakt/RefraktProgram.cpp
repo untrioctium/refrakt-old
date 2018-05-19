@@ -40,7 +40,9 @@ std::shared_ptr<RefraktProgram> RefraktProgram::load(std::string program_name)
 		ptr->draw_order_.push_back(name);
 		ptr->parameters_[name] = def;
 		
-		if (ptr->registered_types_.count(type) == 1)
+		if (def["init"].valid())
+			ptr->parameters_[name]["value"] = def["init"];
+		else if (ptr->registered_types_.count(type) == 1)
 			ptr->parameters_[name]["value"] = ptr->getLuaState()[type]();
 		else
 			ptr->parameters_[name]["value"] = 0;
@@ -58,6 +60,16 @@ void RefraktProgram::drawGui()
 		std::string type = this->parameters_[p]["type"];
 		if (this->registered_types_.count(type) == 1) {
 			this->lua_state_[type]["meta"]["gui"](this->parameters_[p]["value"], this->parameters_[p]);
+			ImGui::SameLine();
+			ImGui::TextDisabled("(?)");
+			if (ImGui::IsItemHovered())
+			{
+				ImGui::BeginTooltip();
+				ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
+				ImGui::TextUnformatted(this->parameters_[p]["tool_tip"].get<const char*>());
+				ImGui::PopTextWrapPos();
+				ImGui::EndTooltip();
+			}
 		}
 	}
 	ImGui::End();
@@ -119,10 +131,10 @@ void RefraktProgram::loadBindings()
 		};
 
 		simple_bind("float", rfkt::float_t());
-		imgui_arr_binder("float", rfkt::float_t(), ImGuiDataType_Float, "%.3f");
+		imgui_arr_binder("float", rfkt::float_t(), ImGuiDataType_Float, "%.8f");
 
 		simple_bind("double", rfkt::double_t());
-		imgui_arr_binder("double", rfkt::double_t(), ImGuiDataType_Double, "%.6f");
+		imgui_arr_binder("double", rfkt::double_t(), ImGuiDataType_Double, "%.8f");
 
 		simple_bind("int32", rfkt::int32_t());
 		imgui_arr_binder("int32", rfkt::int32_t(), ImGuiDataType_S32, "%d");
@@ -144,10 +156,10 @@ void RefraktProgram::loadBindings()
 		};
 
 		vec2_bind("vec2", vec2());
-		imgui_arr_binder("vec2", vec2(), ImGuiDataType_Float, "%.3f");
+		imgui_arr_binder("vec2", vec2(), ImGuiDataType_Float, "%.8f");
 
 		vec2_bind("dvec2", dvec2());
-		imgui_arr_binder("dvec2", dvec2(), ImGuiDataType_Double, "%.6f");
+		imgui_arr_binder("dvec2", dvec2(), ImGuiDataType_Double, "%.8f");
 
 		vec2_bind("ivec2", ivec2());
 		imgui_arr_binder("ivec2", ivec2(), ImGuiDataType_S32, "%d");
@@ -170,10 +182,10 @@ void RefraktProgram::loadBindings()
 		};
 
 		vec3_bind("vec3", vec3());
-		imgui_arr_binder("vec3", vec3(), ImGuiDataType_Float, "%.3f");
+		imgui_arr_binder("vec3", vec3(), ImGuiDataType_Float, "%.8f");
 
 		vec3_bind("dvec3", dvec3());
-		imgui_arr_binder("dvec3", dvec3(), ImGuiDataType_Double, "%.6f");
+		imgui_arr_binder("dvec3", dvec3(), ImGuiDataType_Double, "%.8f");
 
 		vec3_bind("ivec3", ivec3());
 		imgui_arr_binder("ivec3", ivec3(), ImGuiDataType_S32, "%d");
@@ -197,10 +209,10 @@ void RefraktProgram::loadBindings()
 		};
 
 		vec4_bind("vec4", vec4());
-		imgui_arr_binder("vec4", vec4(), ImGuiDataType_Float, "%.3f");
+		imgui_arr_binder("vec4", vec4(), ImGuiDataType_Float, "%.8f");
 
 		vec4_bind("dvec4", dvec4());
-		imgui_arr_binder("dvec4", dvec4(), ImGuiDataType_Double, "%.6f");
+		imgui_arr_binder("dvec4", dvec4(), ImGuiDataType_Double, "%.8f");
 
 		vec4_bind("ivec4", ivec4());
 		imgui_arr_binder("ivec4", ivec4(), ImGuiDataType_S32, "%d");

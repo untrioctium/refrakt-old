@@ -60,7 +60,7 @@ GLuint genRenderProg() {
 		 }"
 	};
 
-	std::ifstream t("programs\\test.frag");
+	std::ifstream t("programs\\escape.frag");
 	std::string fpSrc((std::istreambuf_iterator<char>(t)),
 		std::istreambuf_iterator<char>()); 
 	const char* src = fpSrc.c_str();
