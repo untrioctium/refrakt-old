@@ -12,6 +12,7 @@
 #include <experimental/filesystem>
 
 #include "GLtypes.hpp"
+#include "base64.h"
 
 namespace fs = std::experimental::filesystem;
 using json = nlohmann::json;
@@ -39,7 +40,7 @@ std::shared_ptr<RefraktProgram> RefraktProgram::load(std::string program_name)
 
 		ptr->draw_order_.push_back(name);
 		ptr->parameters_[name] = def;
-		
+
 		if (def["init"].valid())
 			ptr->parameters_[name]["value"] = def["init"];
 		else if (ptr->registered_types_.count(type) == 1)
@@ -55,7 +56,9 @@ std::shared_ptr<RefraktProgram> RefraktProgram::load(std::string program_name)
 
 void RefraktProgram::drawGui()
 {
+
 	ImGui::Begin("Parameters");
+
 	for (auto p : this->draw_order_) {
 		std::string type = this->parameters_[p]["type"];
 		if (this->registered_types_.count(type) == 1) {
@@ -72,8 +75,43 @@ void RefraktProgram::drawGui()
 			}
 		}
 	}
+	if (ImGui::Button("Copy to Clipboard"))
+		ImGui::SetClipboardText(this->serialize().c_str());
+
+	ImGui::SameLine();
+
+	if (ImGui::Button("Load from Clipboard"))
+		this->deserialize(ImGui::GetClipboardText());
+
 	ImGui::End();
 }
+
+std::string RefraktProgram::serialize() {
+	nlohmann::json out;
+
+	for (auto p : this->draw_order_) {
+		sol::object result = this->parameters_[p]["value"]["serialize"](this->parameters_[p]["value"]);
+		out.emplace(p, result.as<nlohmann::json>());
+	}
+
+	std::string result = out.dump();
+	result = "RFKT" + base64_encode((const unsigned char*) result.c_str(), result.size());
+
+	return result;
+}
+
+bool RefraktProgram::deserialize(std::string s) {
+	if (s.substr(0, 4) != "RFKT") return false;
+
+	auto result = nlohmann::json::parse(base64_decode(s.substr(4)));
+
+	for (nlohmann::json::iterator it = result.begin(); it != result.end(); it++){
+		this->parameters_[it.key()]["value"]["deserialize"](this->parameters_[it.key()]["value"], it.value());
+	}
+
+	return true;
+}
+
 
 void RefraktProgram::loadBindings()
 {
@@ -101,19 +139,21 @@ void RefraktProgram::loadBindings()
 			[]() { return arr_name(); }, // empty factory
 			[](arr_type init) { return arr_name(init); }, // single initializer
 			[](sol::variadic_args va) {
-				if (va.size() != arr_name::len) throw sol::error("error creating array");
+			if (va.size() != arr_name::len) throw sol::error("error creating array");
 
-				auto result = arr_name();
-				for (std::size_t i = 0; i < arr_name::len; i++) result[i] = va[i].get<arr_type>();
-				return result;
-			}
+			auto result = arr_name();
+			for (std::size_t i = 0; i < arr_name::len; i++) result[i] = va[i].get<arr_type>();
+			return result;
+		}
 		);
 
 		state.new_usertype<arr_name>(name,
 			sol::call_constructor, factories,
 			sol::meta_function::index, [](arr_name& a, std::size_t index) -> decltype(a[index]) { return a[index]; },
 			sol::meta_function::new_index, [](arr_name& a, std::size_t index, arr_type v) { a[index] = v; },
-			"meta", sol::var( sol::reference( state.create_table() )),
+			"meta", sol::var(sol::reference(state.create_table())),
+			"serialize", &arr_name::serialize,
+			"deserialize", &arr_name::deserialize,
 			members...);
 
 		state[name]["meta"]["type"] = name;
@@ -145,7 +185,7 @@ void RefraktProgram::loadBindings()
 		simple_bind("bool", rfkt::bool_t());
 	}
 
-	/* vec2 bindings */{
+	/* vec2 bindings */ {
 		auto vec2_bind = [&base_array_bind](std::string name, auto v) {
 			using vec_name = decltype(v);
 
@@ -222,7 +262,7 @@ void RefraktProgram::loadBindings()
 
 		vec4_bind("bvec4", bvec4());
 	}
-	
+
 	/* matrix bindings */ {
 		base_array_bind("mat2x2", mat2x2());
 		base_array_bind("mat2x3", mat2x3());

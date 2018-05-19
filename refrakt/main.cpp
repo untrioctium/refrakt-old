@@ -1,7 +1,6 @@
 #include "imgui.h"
 #include "imgui-SFML.h"
 #include "sol.hpp"
-#include "json.hpp"
 #include "RtMidi.h"
 #include <GL/glew.h>
 #include <SFML/Graphics/RenderWindow.hpp>
@@ -161,13 +160,16 @@ int main( int argc, char** argv )
     ImGui::SFML::Init(window);
 
     auto pgm = RefraktProgram::load("escape.lua");
-
-
-
     char cmd_buf[256] = {'\0'};
 
     sf::Clock deltaClock;
+	sf::Clock fpsCounter;
+	float fpsAvg = 0;
     while (window.isOpen()) {
+
+		int lastTime = fpsCounter.restart().asMilliseconds();
+		fpsAvg = .9f * fpsAvg + 100.0f / float((lastTime == 0)? 1: lastTime);
+
         sf::Event event;
         while (window.pollEvent(event)) {
             ImGui::SFML::ProcessEvent(event);
@@ -181,8 +183,12 @@ int main( int argc, char** argv )
 
 		window.clear();
 
+
         ImGui::SFML::Update(window, deltaClock.restart());
-        //ImGui::ShowTestWindow();
+
+		ImGui::Text("%.0f fps", fpsAvg);
+
+        ImGui::ShowTestWindow();
 
         ImGui::Begin("Console");
         if(ImGui::InputText("Lua Command", cmd_buf, 256, ImGuiInputTextFlags_EnterReturnsTrue))

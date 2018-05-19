@@ -12,6 +12,10 @@ public:
 	  return parameters_[parameter]["value"].get<T&>();
   }
 
+  std::string serialize();
+
+  bool deserialize(std::string s);
+
   void drawGui();
 
 private:

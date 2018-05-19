@@ -1,5 +1,6 @@
 #pragma once
 #include <variant>
+#include "json.hpp"
 
 // inheritable struct template that signifies the child
 // should always have a constant size in bytes
@@ -32,6 +33,7 @@ template<> struct is_const_sized<std::double_t> {
 template<typename T, std::size_t s> struct ConstSizeArray : public const_sized<sizeof(T) * s> {
 public:
 	T & operator[](std::size_t index) { return *(data_ + index); }
+
 	T* operator&() { return data_; }
 	T& operator*() { return data_; }
 
@@ -47,8 +49,14 @@ public:
 		return *this;
 	}
 
-	template<std::size_t index> T get() { return data_[index]; }
+	template<std::size_t index> T get() const { return data_[index]; }
 	template<std::size_t index> void set(const T value) { data_[index] = value; }
+
+	T get(std::size_t index) const { return data_[index]; }
+	void set(std::size_t index, T value) { data_[index] = value; }
+
+	nlohmann::json serialize() { return nlohmann::json(data_); }
+	void deserialize(const nlohmann::json& j) { for (std::size_t index = 0; index < len; index++) data_[index] = j[index]; }
 
 	static constexpr std::size_t len = s;
 	typedef T stored_type;
@@ -56,6 +64,14 @@ public:
 private:
 	T data_[s] = { 0 };
 };
+
+template<typename T, std::size_t s> void to_json(nlohmann::json& j, const ConstSizeArray<T, s>& a) {
+	for (std::size_t index = 0; index < s; index++) j.push_back(a.get(index));
+}
+
+template<typename T, std::size_t s> void from_json(const nlohmann::json& j, ConstSizeArray<T, s>& a) {
+	for (std::size_t index = 0; index < s; index++) a[index] = j[index];
+}
 
 #define USING_WITH_STATIC_ASSERT( name, t, size, expected ) \
 	using name = ConstSizeArray<t, size>; \

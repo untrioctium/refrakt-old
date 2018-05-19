@@ -48,6 +48,9 @@
     <ClCompile Include="extern\RtMidi.cpp">
       <Filter>Source Files\extern</Filter>
     </ClCompile>
+    <ClCompile Include="extern\base64.cpp">
+      <Filter>Source Files\extern</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="RefraktProgram.hpp">
@@ -84,6 +87,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="extern\RtMidi.h">
+      <Filter>Header Files\extern</Filter>
+    </ClInclude>
+    <ClInclude Include="extern\base64.h">
       <Filter>Header Files\extern</Filter>
     </ClInclude>
   </ItemGroup>
