@@ -262,5 +262,5 @@ void main() {
     if (r < escape_radius)
         color = vec4(0.0f, 0.0f, 0.0f, 1.0f);
     else
-        color = vec4(hsvToRGB(vec3(lograt, lograt, lograt)), 1.0f);
+        color = vec4(hsvToRGB(vec3(lograt, 1 - lograt, lograt)), 1.0f);
 }

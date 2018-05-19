@@ -228,8 +228,6 @@ int main( int argc, char** argv )
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		glBindVertexArray(0);
 
-		std::cout << pgm->get<vec2>("julia_c")[0] << std::endl;
-
 		window.pushGLStates();
 		ImGui::SFML::Render(window);
 		window.popGLStates();
