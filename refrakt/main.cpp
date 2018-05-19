@@ -34,6 +34,100 @@ void interpret_midi(std::vector<uint8_t>& message, double time)
 	} else printf("(C%d) %s: [%s: %d] (%f since last event)\n", channel, names[status].c_str(), byte1[status].c_str(), data1, time);
 }
 
+void checkErrors(std::string desc) {
+	GLenum e = glGetError();
+	if (e != GL_NO_ERROR) {
+		fprintf(stderr, "OpenGL error in \"%s\": %s (%d)\n", desc.c_str(), gluErrorString(e), e);
+		exit(20);
+	}
+}
+
+GLuint vertArray;
+GLuint posBuf;
+
+GLuint genRenderProg() {
+	GLuint progHandle = glCreateProgram();
+	GLuint vp = glCreateShader(GL_VERTEX_SHADER);
+	GLuint fp = glCreateShader(GL_FRAGMENT_SHADER);
+
+	const char *vpSrc[] = {
+		"#version 430\n",
+		"in vec2 pos;\
+		 out vec2 texCoord;\
+		 void main() {\
+			 texCoord = pos;\
+			 gl_Position = vec4(pos.x, pos.y, 0.0, 1.0);\
+		 }"
+	};
+
+	std::ifstream t("programs\\test.frag");
+	std::string fpSrc((std::istreambuf_iterator<char>(t)),
+		std::istreambuf_iterator<char>()); 
+	const char* src = fpSrc.c_str();
+
+	glShaderSource(vp, 2, vpSrc, NULL);
+	glShaderSource(fp, 1, &src, NULL);
+
+	glCompileShader(vp);
+	int rvalue;
+	glGetShaderiv(vp, GL_COMPILE_STATUS, &rvalue);
+	if (!rvalue) {
+		fprintf(stderr, "Error in compiling vp\n");
+		exit(30);
+	}
+	glAttachShader(progHandle, vp);
+
+	glCompileShader(fp);
+	glGetShaderiv(fp, GL_COMPILE_STATUS, &rvalue);
+	if (!rvalue) {
+		fprintf(stderr, "Error in compiling the compute shader\n");
+		GLchar log[10240];
+		GLsizei length;
+		glGetShaderInfoLog(fp, 10239, &length, log);
+		fprintf(stderr, "Compiler log:\n%s\n", log);
+		std::cin.get();
+		exit(40);
+	}
+
+	glAttachShader(progHandle, fp);
+
+	glBindFragDataLocation(progHandle, 0, "color");
+	glLinkProgram(progHandle);
+
+	glGetProgramiv(progHandle, GL_LINK_STATUS, &rvalue);
+	if (!rvalue) {
+		fprintf(stderr, "Error in linking compute shader program\n");
+		GLchar log[10240];
+		GLsizei length;
+		glGetProgramInfoLog(progHandle, 10239, &length, log);
+		fprintf(stderr, "Linker log:\n%s\n", log);
+		std::cin.get();
+		exit(41);
+	}
+
+	glGenVertexArrays(1, &vertArray);
+	glBindVertexArray(vertArray);
+
+	glGenBuffers(1, &posBuf);
+	glBindBuffer(GL_ARRAY_BUFFER, posBuf);
+	float data[] = {
+		-1.0f, -1.0f,
+		-1.0f, 1.0f,
+		1.0f, -1.0f,
+		1.0f, 1.0f
+	};
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 8, data, GL_STREAM_DRAW);
+	GLint posPtr = glGetAttribLocation(progHandle, "pos");
+	glVertexAttribPointer(posPtr, 2, GL_FLOAT, GL_FALSE, 0, 0);
+	glEnableVertexAttribArray(posPtr);
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+
+	checkErrors("Render shaders");
+	return progHandle;
+}
+
 int main( int argc, char** argv )
 {
 	/*midi stuff*/
@@ -61,10 +155,14 @@ int main( int argc, char** argv )
 	glewExperimental = true;
 	glewInit();
 
+	GLuint handle = genRenderProg();
+
 	window.setActive();
     ImGui::SFML::Init(window);
 
     auto pgm = RefraktProgram::load("escape.lua");
+
+
 
     char cmd_buf[256] = {'\0'};
 
@@ -84,7 +182,7 @@ int main( int argc, char** argv )
 		window.clear();
 
         ImGui::SFML::Update(window, deltaClock.restart());
-        ImGui::ShowTestWindow();
+        //ImGui::ShowTestWindow();
 
         ImGui::Begin("Console");
         if(ImGui::InputText("Lua Command", cmd_buf, 256, ImGuiInputTextFlags_EnterReturnsTrue))
@@ -107,7 +205,30 @@ int main( int argc, char** argv )
 
 		//pgm->lua_state.script("lol:gui( format )");
 
-		pgm->get<vec2>("julia_mode") = vec2({ 2.0, 2.0 });
+		auto pushToOpenGL = [pgm, handle](auto arg, auto type, auto function) {
+			function(glGetUniformLocation(handle, arg), 1, &(pgm->get<decltype(type)>(arg)));
+		};
+
+		glBindVertexArray(vertArray);
+		glBindBuffer(GL_ARRAY_BUFFER, posBuf);
+		glUseProgram(handle);
+		sf::Vector2 size = window.getSize();
+		glViewport(0, 0, size.x, size.y);
+		pushToOpenGL("center", vec2(), glUniform2fv);
+		pushToOpenGL("scale", rfkt::float_t(), glUniform1fv);
+		pushToOpenGL("exponent", vec2(), glUniform2fv);
+		pushToOpenGL("escape_radius", rfkt::float_t(), glUniform1fv);
+		pushToOpenGL("max_iterations", rfkt::uint32_t(), glUniform1uiv);
+		pushToOpenGL("julia", vec2(), glUniform2fv);
+		pushToOpenGL("julia_c", vec2(), glUniform2fv);
+		pushToOpenGL("burning_ship", vec2(), glUniform2fv);
+		glUniform1f(glGetUniformLocation(handle, "surface_ratio"), float(size.y) / float(size.x));
+
+		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindVertexArray(0);
+
+		std::cout << pgm->get<vec2>("julia_c")[0] << std::endl;
 
 		window.pushGLStates();
 		ImGui::SFML::Render(window);

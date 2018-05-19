@@ -74,8 +74,8 @@ void RefraktProgram::loadBindings()
 			arr_type min = p["bounds"][1].get<arr_type>();
 			arr_type max = p["bounds"][2].get<arr_type>();
 
-			return ImGui::SliderScalarN(p["description"].get<const char*>(),
-				type, &self, arr_name::len, &min, &max,
+			return ImGui::DragScalarN(p["description"].get<const char*>(),
+				type, &self, arr_name::len, p["speed"].get_or<float>(1.0), &min, &max,
 				p["format"].get_or<std::string>(default_format).c_str(),
 				p["power"].get_or<float>(1.0));
 		};

@@ -37,7 +37,10 @@ public:
 
 	ConstSizeArray() {}
 	ConstSizeArray(T init) { for (std::size_t index = 0; index < len; index++) data_[index] = init;}
-	ConstSizeArray(std::initializer_list<T> l) { for (std::size_t index = 0; index < len; index++) data_[index] = *(l.begin() + index); }
+
+	ConstSizeArray(std::initializer_list<T> l) { 
+		for (std::size_t index = 0; index < len; index++) data_[index] = *(l.begin() + index);
+	}
 
 	ConstSizeArray<T, s>& operator=(ConstSizeArray<T, s> that) {
 		for (std::size_t index = 0; index < len; index++) data_[index] = that.data_[index];
