@@ -56,9 +56,6 @@ std::shared_ptr<RefraktProgram> RefraktProgram::load(std::string program_name)
 
 void RefraktProgram::drawGui()
 {
-
-	ImGui::Begin("Parameters");
-
 	for (auto p : this->draw_order_) {
 		std::string type = this->parameters_[p]["type"];
 		if (this->registered_types_.count(type) == 1) {
@@ -75,15 +72,6 @@ void RefraktProgram::drawGui()
 			}
 		}
 	}
-	if (ImGui::Button("Copy to Clipboard"))
-		ImGui::SetClipboardText(this->serialize().c_str());
-
-	ImGui::SameLine();
-
-	if (ImGui::Button("Load from Clipboard"))
-		this->deserialize(ImGui::GetClipboardText());
-
-	ImGui::End();
 }
 
 std::string RefraktProgram::serialize() {

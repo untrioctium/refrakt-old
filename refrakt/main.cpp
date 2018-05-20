@@ -30,7 +30,8 @@ void interpret_midi(std::vector<uint8_t>& message, double time)
 	{
 		uint8_t data2 = message[2];
 		printf("(C%d) %s: [%s: %d, %s: %d] (%f since last event)\n", channel, names[status].c_str(), byte1[status].c_str(), data1, byte2[status].c_str(), data2, time);
-	} else printf("(C%d) %s: [%s: %d] (%f since last event)\n", channel, names[status].c_str(), byte1[status].c_str(), data1, time);
+	}
+	else printf("(C%d) %s: [%s: %d] (%f since last event)\n", channel, names[status].c_str(), byte1[status].c_str(), data1, time);
 }
 
 void checkErrors(std::string desc) {
@@ -61,7 +62,7 @@ GLuint genRenderProg() {
 
 	std::ifstream t("programs\\escape.frag");
 	std::string fpSrc((std::istreambuf_iterator<char>(t)),
-		std::istreambuf_iterator<char>()); 
+		std::istreambuf_iterator<char>());
 	const char* src = fpSrc.c_str();
 
 	glShaderSource(vp, 2, vpSrc, NULL);
@@ -127,7 +128,63 @@ GLuint genRenderProg() {
 	return progHandle;
 }
 
-int main( int argc, char** argv )
+void show_lua_console(sol::state& state) {
+	ImGui::Begin("Lua Console");
+
+	static char command_buffer[1024] = { 0 };
+
+	if (ImGui::InputText("##command", command_buffer, 256, ImGuiInputTextFlags_EnterReturnsTrue))
+	{
+		ImGui::SetKeyboardFocusHere(-1);
+		std::string command = command_buffer;
+		command_buffer[0] = '\0';
+
+		std::cout << "$: " << command << std::endl;
+
+		std::string result = state.script(command, [](lua_State* L, sol::protected_function_result pfr) {
+			return pfr;
+		});
+
+		if (result != "nil\n") std::cout << result << std::endl;
+	}
+	ImGui::End();
+}
+
+void show_main_menu() {
+	if (ImGui::BeginMainMenuBar()) {
+		static sf::Clock fpsCounter;
+		static float fpsAvg = 0.0;
+		int lastTime = fpsCounter.restart().asMilliseconds();
+		fpsAvg = .9f * fpsAvg + 100.0f / float((lastTime == 0) ? 1 : lastTime);
+
+		ImGui::Text("%.0f FPS", fpsAvg);
+
+		ImGui::EndMainMenuBar();
+	}
+}
+
+void show_program_parameters(RefraktProgram& pgm) {
+	ImGui::Begin("Parameters", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoMove);
+
+	if (ImGui::BeginMenuBar()) {
+		if (ImGui::Button("Copy to Clipboard"))
+			ImGui::SetClipboardText(pgm.serialize().c_str());
+
+		ImGui::SameLine();
+
+		if (ImGui::Button("Load from Clipboard"))
+			pgm.deserialize(ImGui::GetClipboardText());
+
+		ImGui::EndMenuBar();
+	}
+	pgm.drawGui();
+
+	ImGui::SetWindowPos(ImVec2(0, ImGui::GetIO().DisplaySize.y - ImGui::GetWindowHeight()));
+
+	ImGui::End();
+}
+
+int main(int argc, char** argv)
 {
 	/*midi stuff*/
 	json settings;
@@ -141,9 +198,9 @@ int main( int argc, char** argv )
 		"refrakt",
 		settings.value("fullscreen", false) ? sf::Style::Fullscreen : sf::Style::Default,
 		sf::ContextSettings( // OpenGL settings
-			settings.value("/ogl/depth_buffer_bits"_json_pointer,   24), // depth buffer bits
-			settings.value("/ogl/stencil_buffer_bits"_json_pointer,  8), // stencil buffer bits
-			settings.value("/ogl/antialiasing"_json_pointer,         0), // antialiasing level
+			settings.value("/ogl/depth_buffer_bits"_json_pointer, 24), // depth buffer bits
+			settings.value("/ogl/stencil_buffer_bits"_json_pointer, 8), // stencil buffer bits
+			settings.value("/ogl/antialiasing"_json_pointer, 0), // antialiasing level
 			4, // OpenGL major version
 			3, // OpenGL minor version
 			sf::ContextSettings::Attribute::Debug
@@ -157,57 +214,37 @@ int main( int argc, char** argv )
 	GLuint handle = genRenderProg();
 
 	window.setActive();
-    ImGui::SFML::Init(window);
+	ImGui::SFML::Init(window);
 
-    auto pgm = RefraktProgram::load("escape.lua");
-    char cmd_buf[256] = {'\0'};
+	auto pgm = RefraktProgram::load("escape.lua");
+	char cmd_buf[256] = { '\0' };
 
-    sf::Clock deltaClock;
-	sf::Clock fpsCounter;
+	sf::Clock deltaClock;
+	
 	float fpsAvg = 0;
-    while (window.isOpen()) {
+	while (window.isOpen()) {
 
-		int lastTime = fpsCounter.restart().asMilliseconds();
-		fpsAvg = .9f * fpsAvg + 100.0f / float((lastTime == 0)? 1: lastTime);
+		sf::Event event;
+		while (window.pollEvent(event)) {
+			ImGui::SFML::ProcessEvent(event);
 
-        sf::Event event;
-        while (window.pollEvent(event)) {
-            ImGui::SFML::ProcessEvent(event);
-
-            if (event.type == sf::Event::Closed || 
-				(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Key::Escape )) {
-                window.close();
+			if (event.type == sf::Event::Closed ||
+				(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Key::Escape)) {
+				window.close();
 				return 0;
-            }
-        }
+			}
+		}
 
 		window.clear();
 
 
-        ImGui::SFML::Update(window, deltaClock.restart());
+		ImGui::SFML::Update(window, deltaClock.restart());
+		show_main_menu();
 
-		ImGui::Text("%.0f fps", fpsAvg);
+		//ImGui::ShowTestWindow();
+		//show_lua_console(pgm->getLuaState());
 
-        ImGui::ShowTestWindow();
-
-        ImGui::Begin("Console");
-        if(ImGui::InputText("Lua Command", cmd_buf, 256, ImGuiInputTextFlags_EnterReturnsTrue))
-        {
-            ImGui::SetKeyboardFocusHere(-1);
-            std::string command = cmd_buf;
-            cmd_buf[0] = '\0';
-
-			std::cout << "$: " << command << std::endl;
-
-            std::string result = pgm->getLuaState().script(command, [](lua_State* L, sol::protected_function_result pfr) {
-              return pfr;
-            });
-
-			if( result != "nil\n" ) std::cout << result << std::endl;
-        }
-        ImGui::End();
-
-		pgm->drawGui();
+		show_program_parameters(*pgm);
 
 		//pgm->lua_state.script("lol:gui( format )");
 
@@ -241,9 +278,9 @@ int main( int argc, char** argv )
 		window.display();
 
 
-    }
+	}
 
-    ImGui::SFML::Shutdown();
+	ImGui::SFML::Shutdown();
 
-    return 0;
+	return 0;
 }
