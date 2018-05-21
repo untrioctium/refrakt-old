@@ -1,10 +1,10 @@
 #include <set>
 
-class RefraktProgram
+class RefraktWidget
 {
 public:
   // load an initial state from a package.json from within /programs/program_name/
-  static std::shared_ptr<RefraktProgram> load( std::string program_name );
+  static std::shared_ptr<RefraktWidget> load( std::string program_name );
 
   sol::state& getLuaState() { return lua_state_; };
 

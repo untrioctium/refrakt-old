@@ -6,6 +6,8 @@ uniform vec2 center;
 uniform float scale;
 uniform vec2 exponent;
 uniform float escape_radius;
+uniform float hue_shift;
+uniform float hue_stretch;
 uniform uint max_iterations;
 uniform vec2 julia;
 uniform vec2 julia_c;
@@ -243,19 +245,26 @@ void main() {
 	vec2 orig = vec2( texCoord.x * (1.0/scale) / surface_ratio, texCoord.y * (1.0/scale) * -1) + center;
 	vec2 v = orig;
 	
-    float r = 0.0;
+	float escape = escape_radius * escape_radius;
+    float r2 = 0.0;
 	
 	uint iter = 0;
 	
-    for (; iter < max_iterations && r < escape_radius; ++iter)
+	vec2 offset = vlerp(orig, julia_c, julia);
+
+    for (; iter < max_iterations && r2 < escape; ++iter)
     {
-        v = cPow(vlerp(v, vec2(abs(v.x), abs(v.y)), burning_ship), exponent) + vlerp(orig, julia_c, julia);
-        r = cAbs(v);
+        v = cPow(vlerp(v, vec2(abs(v.x), abs(v.y)), burning_ship), exponent) + offset;
+        r2 = v.x * v.x + v.y * v.y;
     }
 
+	float rat = float(iter)/float(max_iterations);
 	float lograt = log(float(iter))/log(float(max_iterations));
-    if (r < escape_radius)
-        color = vec4(0.0f, 0.0f, 0.0f, 1.0f);
-    else
-        color = vec4(hsvToRGB(vec3(lograt, 1 - lograt, lograt)), 1.0f);
+    if (r2 < escape)
+        color = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+    else {
+		float hue = fract(lograt * hue_stretch + hue_shift);
+		color = vec4(hsvToRGB(vec3(hue, 1 - lograt, lograt)), 1.0f);
+	}
+        
 }

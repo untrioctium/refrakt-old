@@ -7,7 +7,7 @@
 #include <string>
 #include <fstream>
 
-#include "RefraktProgram.hpp"
+#include "RefraktWidget.hpp"
 
 #include <experimental/filesystem>
 
@@ -17,14 +17,14 @@
 namespace fs = std::experimental::filesystem;
 using json = nlohmann::json;
 
-const std::set<std::string> RefraktProgram::simple_types_{ "int", "uint", "float", "double", "bool" };
+const std::set<std::string> RefraktWidget::simple_types_{ "int", "uint", "float", "double", "bool" };
 
-std::shared_ptr<RefraktProgram> RefraktProgram::load(std::string program_name)
+std::shared_ptr<RefraktWidget> RefraktWidget::load(std::string program_name)
 {
 	fs::path package_file("programs");
 	package_file /= program_name;
 
-	auto ptr = std::make_shared<RefraktProgram>();
+	auto ptr = std::make_shared<RefraktWidget>();
 
 	ptr->lua_state_.open_libraries(sol::lib::base, sol::lib::io);
 	ptr->loadBindings();
@@ -54,7 +54,7 @@ std::shared_ptr<RefraktProgram> RefraktProgram::load(std::string program_name)
 	return ptr;
 }
 
-void RefraktProgram::drawGui()
+void RefraktWidget::drawGui()
 {
 	for (auto p : this->draw_order_) {
 		std::string type = this->parameters_[p]["type"];
@@ -74,7 +74,7 @@ void RefraktProgram::drawGui()
 	}
 }
 
-std::string RefraktProgram::serialize() {
+std::string RefraktWidget::serialize() {
 	nlohmann::json out;
 
 	for (auto p : this->draw_order_) {
@@ -88,7 +88,7 @@ std::string RefraktProgram::serialize() {
 	return result;
 }
 
-bool RefraktProgram::deserialize(std::string s) {
+bool RefraktWidget::deserialize(std::string s) {
 	if (s.substr(0, 4) != "RFKT") return false;
 
 	auto result = nlohmann::json::parse(base64_decode(s.substr(4)));
@@ -101,7 +101,7 @@ bool RefraktProgram::deserialize(std::string s) {
 }
 
 
-void RefraktProgram::loadBindings()
+void RefraktWidget::loadBindings()
 {
 
 	auto imgui_arr_binder = [&state = this->lua_state_](std::string name, auto v, ImGuiDataType type, std::string default_format) {

@@ -136,7 +136,7 @@
     <ClCompile Include="extern\imgui_draw.cpp" />
     <ClCompile Include="extern\RtMidi.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="RefraktProgram.cpp" />
+    <ClCompile Include="RefraktWidget.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="extern\base64.h" />
@@ -151,10 +151,12 @@
     <ClInclude Include="extern\stb_textedit.h" />
     <ClInclude Include="extern\stb_truetype.h" />
     <ClInclude Include="GLtypes.hpp" />
-    <ClInclude Include="RefraktProgram.hpp" />
+    <ClInclude Include="RefraktWidget.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\programs\escape.frag" />
     <None Include="..\programs\escape.lua" />
+    <None Include="..\settings.json" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

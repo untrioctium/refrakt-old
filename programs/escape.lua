@@ -10,7 +10,7 @@ return {
 			type = "vec2",
 			description = "Camera center",
 			tool_tip = "Center point of the viewing window",
-			bounds = { -2, 2 },
+			bounds = { -5, 5 },
 			speed = .001
 		},
 		
@@ -20,7 +20,25 @@ return {
 			description = "Picture scale",
 			tool_tip = "Picture scale, where 2 means that the vertical length is 1/2 units",
 			bounds = { 1, 10000 },
-			speed = 1,
+			speed = .25,
+			init = float(1)
+		},
+		{
+			name = "hue_shift",
+			type = "float",
+			description = "Hue shift",
+			tool_tip = "Modify color shading scale",
+			bounds = { 0, 1},
+			speed = .0001,
+			init = float(0)
+		},
+		{
+			name = "hue_stretch",
+			type = "float",
+			description = "Hue stretch",
+			tool_tip = "How often colors repeat",
+			bounds = { .25, 8},
+			speed = .001,
 			init = float(1)
 		},
 		

@@ -22,15 +22,15 @@
     <Filter Include="Source Files\extern\ImGui">
       <UniqueIdentifier>{926bc75d-21a7-49f7-8e4c-0d87286e5b09}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Lua">
+    <Filter Include="Scripts">
       <UniqueIdentifier>{79c06a83-1354-4d31-975a-c2d10b8783c9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Scripts\Escape">
+      <UniqueIdentifier>{4994e9f2-3cbb-4c8d-9b96-dc584d02db95}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="RefraktProgram.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="extern\imgui.cpp">
@@ -51,11 +51,11 @@
     <ClCompile Include="extern\base64.cpp">
       <Filter>Source Files\extern</Filter>
     </ClCompile>
+    <ClCompile Include="RefraktWidget.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="RefraktProgram.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="extern\imconfig.h">
       <Filter>Header Files\extern</Filter>
     </ClInclude>
@@ -92,10 +92,19 @@
     <ClInclude Include="extern\base64.h">
       <Filter>Header Files\extern</Filter>
     </ClInclude>
+    <ClInclude Include="RefraktWidget.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\programs\escape.lua">
-      <Filter>Lua</Filter>
+      <Filter>Scripts\Escape</Filter>
+    </None>
+    <None Include="..\programs\escape.frag">
+      <Filter>Scripts\Escape</Filter>
+    </None>
+    <None Include="..\settings.json">
+      <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>
 </Project>

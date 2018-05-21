@@ -5,6 +5,6 @@
 	"ogl" : {
 		"depth_buffer_bits": 24,
 		"stencil_buffer_bits": 8,
-		"antialiasing": 0
+		"antialiasing": 4
 	}
 }

@@ -12,7 +12,7 @@
 
 #include "GLtypes.hpp"
 
-#include "RefraktProgram.hpp"
+#include "RefraktWidget.hpp"
 
 using json = nlohmann::json;
 
@@ -157,13 +157,13 @@ void show_main_menu() {
 		int lastTime = fpsCounter.restart().asMilliseconds();
 		fpsAvg = .9f * fpsAvg + 100.0f / float((lastTime == 0) ? 1 : lastTime);
 
-		ImGui::Text("%.0f FPS", fpsAvg);
+		ImGui::Text("Press ~ to hide guis. Press F1 to toggle fullscreen. %.0f FPS", fpsAvg);
 
 		ImGui::EndMainMenuBar();
 	}
 }
 
-void show_program_parameters(RefraktProgram& pgm) {
+void show_program_parameters(RefraktWidget& pgm) {
 	ImGui::Begin("Parameters", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoMove);
 
 	if (ImGui::BeginMenuBar()) {
@@ -190,21 +190,28 @@ int main(int argc, char** argv)
 	json settings;
 	std::ifstream("settings.json") >> settings;
 
-	sf::RenderWindow window(
-		sf::VideoMode(
+	sf::VideoMode screenInfo(
 			settings.value<unsigned int>("width", 1280),
 			settings.value<unsigned int>("height", 720)
-		),
+	);
+
+	bool fullscreen = settings.value("fullscreen", false);
+
+	auto windowStyle = fullscreen ? sf::Style::Fullscreen : sf::Style::Default;
+	sf::ContextSettings ctxSettings(
+		settings.value("/ogl/depth_buffer_bits"_json_pointer, 24), // depth buffer bits
+		settings.value("/ogl/stencil_buffer_bits"_json_pointer, 8), // stencil buffer bits
+		settings.value("/ogl/antialiasing"_json_pointer, 0), // antialiasing level
+		4, // OpenGL major version
+		3, // OpenGL minor version
+		sf::ContextSettings::Attribute::Debug
+	);
+
+	sf::RenderWindow window(
+		screenInfo,
 		"refrakt",
-		settings.value("fullscreen", false) ? sf::Style::Fullscreen : sf::Style::Default,
-		sf::ContextSettings( // OpenGL settings
-			settings.value("/ogl/depth_buffer_bits"_json_pointer, 24), // depth buffer bits
-			settings.value("/ogl/stencil_buffer_bits"_json_pointer, 8), // stencil buffer bits
-			settings.value("/ogl/antialiasing"_json_pointer, 0), // antialiasing level
-			4, // OpenGL major version
-			3, // OpenGL minor version
-			sf::ContextSettings::Attribute::Debug
-		)
+		windowStyle,
+		ctxSettings
 	);
 	window.setFramerateLimit(settings.value<unsigned int>("framerate", 60));
 
@@ -216,8 +223,10 @@ int main(int argc, char** argv)
 	window.setActive();
 	ImGui::SFML::Init(window);
 
-	auto pgm = RefraktProgram::load("escape.lua");
+	auto pgm = RefraktWidget::load("escape.lua");
 	char cmd_buf[256] = { '\0' };
+
+	bool showGui = true;
 
 	sf::Clock deltaClock;
 	
@@ -225,6 +234,7 @@ int main(int argc, char** argv)
 	while (window.isOpen()) {
 
 		sf::Event event;
+
 		while (window.pollEvent(event)) {
 			ImGui::SFML::ProcessEvent(event);
 
@@ -233,19 +243,37 @@ int main(int argc, char** argv)
 				window.close();
 				return 0;
 			}
+
+			if (event.type == sf::Event::KeyReleased && event.key.code == sf::Keyboard::Key::Tilde)
+				showGui ^= true;
+
+			if (event.type == sf::Event::KeyReleased && event.key.code == sf::Keyboard::Key::F1) {
+				if( fullscreen )
+					window.create(screenInfo, "refrakt", sf::Style::Default, ctxSettings);
+				else
+				{
+					sf::Vector2 size = window.getSize();
+					screenInfo.width = size.x;
+					screenInfo.height = size.y;
+					window.create(sf::VideoMode::getDesktopMode(), "refrakt", sf::Style::None, ctxSettings);
+				}
+				fullscreen ^= true;
+				handle = genRenderProg();
+			}
 		}
 
 		window.clear();
 
 
 		ImGui::SFML::Update(window, deltaClock.restart());
-		show_main_menu();
 
 		//ImGui::ShowTestWindow();
 		//show_lua_console(pgm->getLuaState());
-
-		show_program_parameters(*pgm);
-
+		if (showGui)
+		{
+			show_main_menu();
+			show_program_parameters(*pgm);
+		}
 		//pgm->lua_state.script("lol:gui( format )");
 
 		auto pushToOpenGL = [pgm, handle](auto arg, auto type, auto function) {
@@ -255,12 +283,16 @@ int main(int argc, char** argv)
 		glBindVertexArray(vertArray);
 		glBindBuffer(GL_ARRAY_BUFFER, posBuf);
 		glUseProgram(handle);
+
 		sf::Vector2 size = window.getSize();
+
 		glViewport(0, 0, size.x, size.y);
 		pushToOpenGL("center", vec2(), glUniform2fv);
 		pushToOpenGL("scale", rfkt::float_t(), glUniform1fv);
 		pushToOpenGL("exponent", vec2(), glUniform2fv);
 		pushToOpenGL("escape_radius", rfkt::float_t(), glUniform1fv);
+		pushToOpenGL("hue_shift", rfkt::float_t(), glUniform1fv);
+		pushToOpenGL("hue_stretch", rfkt::float_t(), glUniform1fv);
 		pushToOpenGL("max_iterations", rfkt::uint32_t(), glUniform1uiv);
 		pushToOpenGL("julia", vec2(), glUniform2fv);
 		pushToOpenGL("julia_c", vec2(), glUniform2fv);
@@ -271,13 +303,14 @@ int main(int argc, char** argv)
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		glBindVertexArray(0);
 
-		window.pushGLStates();
-		ImGui::SFML::Render(window);
-		window.popGLStates();
+		if (showGui) {
+			window.pushGLStates();
+			ImGui::SFML::Render(window);
+			window.popGLStates();
 
+
+		} else ImGui::EndFrame();
 		window.display();
-
-
 	}
 
 	ImGui::SFML::Shutdown();
