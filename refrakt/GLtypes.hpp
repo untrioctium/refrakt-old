@@ -17,17 +17,7 @@ private:
 	static std::false_type test(...) { return std::false_type(); };
 
 public:
-	static constexpr bool value = std::is_integral_v<T> || decltype(is_const_sized::test(T()))::value;
-};
-
-// specialized overload because std::float_t does not return true with is_integral_v
-template<> struct is_const_sized<std::float_t> {
-	static constexpr bool value = true;
-};
-
-// specialized overload because std::double_t does not return true with is_integral_v
-template<> struct is_const_sized<std::double_t> {
-	static constexpr bool value = true;
+	static constexpr bool value = std::is_arithmetic_v<T> || decltype(is_const_sized::test(T()))::value;
 };
 
 template<typename T, std::size_t s> struct ConstSizeArray : public const_sized<sizeof(T) * s> {
@@ -38,9 +28,9 @@ public:
 	T& operator*() { return data_; }
 
 	ConstSizeArray() {}
-	ConstSizeArray(T init) { for (std::size_t index = 0; index < len; index++) data_[index] = init;}
+	ConstSizeArray(T init) { for (std::size_t index = 0; index < len; index++) data_[index] = init; }
 
-	ConstSizeArray(std::initializer_list<T> l) { 
+	ConstSizeArray(std::initializer_list<T> l) {
 		for (std::size_t index = 0; index < len; index++) data_[index] = *(l.begin() + index);
 	}
 
@@ -61,8 +51,19 @@ public:
 	static constexpr std::size_t len = s;
 	typedef T stored_type;
 
+	static const std::string type;
+
 private:
 	T data_[s] = { 0 };
+};
+
+template<typename T> struct is_const_size_array {
+private:
+	template<typename U, std::size_t s>
+	static std::true_type test(ConstSizeArray<U, s> a) { return std::true_type(); };
+	static std::false_type test(...) { return std::false_type(); };
+public:
+	static constexpr bool value = decltype(is_const_size_array::test(T()))::value;
 };
 
 template<typename T, std::size_t s> void to_json(nlohmann::json& j, const ConstSizeArray<T, s>& a) {
@@ -83,12 +84,13 @@ template<typename T, std::size_t s> void from_json(const nlohmann::json& j, Cons
 // I'm going to regret this later I'm sure.
 namespace rfkt
 {
-		USING_WITH_STATIC_ASSERT(float_t, std::float_t, 1, 4)
+	USING_WITH_STATIC_ASSERT(float_t, std::float_t, 1, 4)
 		USING_WITH_STATIC_ASSERT(double_t, std::double_t, 1, 8)
 		USING_WITH_STATIC_ASSERT(int32_t, std::int32_t, 1, 4)
 		USING_WITH_STATIC_ASSERT(uint32_t, std::uint32_t, 1, 4)
 		USING_WITH_STATIC_ASSERT(bool_t, bool, 1, 1)
 }
+
 USING_WITH_STATIC_ASSERT(vec2, std::float_t, 2, 8)
 USING_WITH_STATIC_ASSERT(dvec2, std::double_t, 2, 16)
 USING_WITH_STATIC_ASSERT(ivec2, std::int32_t, 2, 8)
@@ -126,3 +128,70 @@ USING_WITH_STATIC_ASSERT(dmat3x4, dvec3, 4, 96)
 USING_WITH_STATIC_ASSERT(dmat4x2, dvec4, 2, 64)
 USING_WITH_STATIC_ASSERT(dmat4x3, dvec4, 3, 96)
 USING_WITH_STATIC_ASSERT(dmat4x4, dvec4, 4, 128)
+
+namespace rfkt {
+	using arg_t_base = std::variant<
+		rfkt::float_t, rfkt::double_t, rfkt::int32_t, rfkt::uint32_t, rfkt::bool_t,
+		vec2, dvec2, ivec2, uvec2, bvec2,
+		vec3, dvec3, ivec3, uvec3, bvec3,
+		vec4, dvec4, ivec4, uvec4, bvec4,
+		mat2x2, mat2x3, mat2x4,
+		mat3x2, mat3x3, mat3x4,
+		mat4x2, mat4x3, mat4x4,
+		dmat2x2, dmat2x3, dmat2x4,
+		dmat3x2, dmat3x3, dmat3x4,
+		dmat4x2, dmat4x3, dmat4x4
+	>;
+
+	struct arg_t : public arg_t_base {
+		using arg_t_base::arg_t_base;
+
+		std::string type() {
+			return std::visit([](auto&& v) -> std::string {
+				using T = std::decay_t<decltype(v)>;
+
+				if constexpr (is_const_size_array<T>::value) {
+					return T::type;
+				}
+				else static_assert(std::false_type::value, "Unhandled type in type() visitor");
+
+			}, static_cast<arg_t_base&>(*this));
+		}
+
+		nlohmann::json serialize() {
+			return std::visit([](auto&& v) {
+				return nlohmann::json(v);
+			}, static_cast<arg_t_base&>(*this));
+		}
+
+		template<typename... Ts> static arg_t create(std::string name) {
+			// TODO: write this properly
+#define arg_t_create_factory_simple(strname, tname) if (name == strname) return arg_t(tname())
+#define arg_t_create_factory(tname) if (name == #tname) return arg_t(tname())
+
+			arg_t_create_factory_simple("float", rfkt::float_t);
+			arg_t_create_factory_simple("double", rfkt::double_t);
+			arg_t_create_factory_simple("int32", rfkt::int32_t);
+			arg_t_create_factory_simple("uint32", rfkt::uint32_t);
+			arg_t_create_factory_simple("bool", rfkt::bool_t);
+
+			arg_t_create_factory(vec2);
+			arg_t_create_factory(dvec2);
+			arg_t_create_factory(ivec2);
+			arg_t_create_factory(uvec2);
+			arg_t_create_factory(bvec2);
+
+			arg_t_create_factory(vec3);
+			arg_t_create_factory(dvec3);
+			arg_t_create_factory(ivec3);
+			arg_t_create_factory(uvec3);
+			arg_t_create_factory(bvec3);
+
+			arg_t_create_factory(vec4);
+			arg_t_create_factory(dvec4);
+			arg_t_create_factory(ivec4);
+			arg_t_create_factory(uvec4);
+			arg_t_create_factory(bvec4);
+		}
+	};
+}

@@ -135,6 +135,7 @@
     <ClCompile Include="extern\imgui_demo.cpp" />
     <ClCompile Include="extern\imgui_draw.cpp" />
     <ClCompile Include="extern\RtMidi.cpp" />
+    <ClCompile Include="GLtypes.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="RefraktWidget.cpp" />
   </ItemGroup>

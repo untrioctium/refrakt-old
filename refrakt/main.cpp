@@ -191,8 +191,8 @@ int main(int argc, char** argv)
 	std::ifstream("settings.json") >> settings;
 
 	sf::VideoMode screenInfo(
-			settings.value<unsigned int>("width", 1280),
-			settings.value<unsigned int>("height", 720)
+		settings.value<unsigned int>("width", 1280),
+		settings.value<unsigned int>("height", 720)
 	);
 
 	bool fullscreen = settings.value("fullscreen", false);
@@ -229,6 +229,11 @@ int main(int argc, char** argv)
 	bool showGui = true;
 
 	sf::Clock deltaClock;
+
+	std::cout << rfkt::arg_t(dmat2x3()).type() << std::endl;
+	std::cout << sizeof(rfkt::arg_t) << std::endl;
+	std::cout << rfkt::arg_t(dvec4(.1337)).serialize() << std::endl;
+	std::cout << rfkt::arg_t::create("vec2").serialize() << std::endl;
 	
 	float fpsAvg = 0;
 	while (window.isOpen()) {
