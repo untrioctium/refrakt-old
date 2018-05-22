@@ -153,7 +153,7 @@ namespace rfkt {
 				if constexpr (is_const_size_array<T>::value) {
 					return T::type;
 				}
-				else static_assert(std::false_type::value, "Unhandled type in type() visitor");
+				else static_assert(std::false_type::value, "Unhandled type in rfkt::arg_t::type() visitor");
 
 			}, static_cast<arg_t_base&>(*this));
 		}
@@ -161,6 +161,12 @@ namespace rfkt {
 		nlohmann::json serialize() {
 			return std::visit([](auto&& v) {
 				return nlohmann::json(v);
+			}, static_cast<arg_t_base&>(*this));
+		}
+
+		template<typename T> T* ptr() {
+			return std::visit([](auto&& v) -> T* {
+				return (T*)&v;
 			}, static_cast<arg_t_base&>(*this));
 		}
 

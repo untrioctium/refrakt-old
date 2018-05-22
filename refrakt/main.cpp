@@ -184,6 +184,28 @@ void show_program_parameters(RefraktWidget& pgm) {
 	ImGui::End();
 }
 
+class MidiControllers {
+public:
+
+	std::uint8_t get(std::uint8_t channel, std::uint8_t controller) {
+		std::uint16_t id = mapToID(channel, controller);
+
+		if (states_.count(id) == 0) return 0;
+		return states_[id];
+	}
+
+	void set(std::uint8_t channel, std::uint8_t controller, std::uint8_t value) {
+		states_[mapToID(channel, controller)] = value;
+	}
+
+private:
+
+	static std::uint16_t mapToID(std::uint8_t channel, std::uint8_t controller) {
+		return (std::uint16_t(channel) << 8) + controller;
+	}
+	std::map<std::uint16_t, std::uint8_t> states_;
+};
+
 int main(int argc, char** argv)
 {
 	/*midi stuff*/
@@ -229,13 +251,21 @@ int main(int argc, char** argv)
 	bool showGui = true;
 
 	sf::Clock deltaClock;
+	auto lol = rfkt::arg_t(bvec4(false));
+	auto jej = lol.ptr<bool>();
+	jej[0] = 2;
 
-	std::cout << rfkt::arg_t(dmat2x3()).type() << std::endl;
-	std::cout << sizeof(rfkt::arg_t) << std::endl;
-	std::cout << rfkt::arg_t(dvec4(.1337)).serialize() << std::endl;
+	std::cout << lol.serialize() << std::endl;
 	std::cout << rfkt::arg_t::create("vec2").serialize() << std::endl;
 	
 	float fpsAvg = 0;
+
+	RtMidiIn *midiin = new RtMidiIn();
+	midiin->openPort(0);
+	midiin->ignoreTypes(false, false, false);
+
+	MidiControllers m;
+
 	while (window.isOpen()) {
 
 		sf::Event event;
@@ -267,6 +297,23 @@ int main(int argc, char** argv)
 			}
 		}
 
+		std::vector<unsigned char> message;
+		int nBytes, i;
+		double stamp;
+
+		while (true) {
+			stamp = midiin->getMessage(&message);
+			if (message.size() == 0) break;
+			if (message.size() != 3) continue;
+			interpret_midi(message, stamp);
+			int status = (message[0] >> 4) - 8;
+			if (status != 3) continue;
+
+			uint8_t channel = message[0] & 0b1111;
+
+			m.set(channel, message[1], message[2]);
+		}
+
 		window.clear();
 
 
@@ -281,8 +328,10 @@ int main(int argc, char** argv)
 		}
 		//pgm->lua_state.script("lol:gui( format )");
 
-		auto pushToOpenGL = [pgm, handle](auto arg, auto type, auto function) {
-			function(glGetUniformLocation(handle, arg), 1, &(pgm->get<decltype(type)>(arg)));
+		auto pushToOpenGL = [pgm, handle](auto arg, auto type, auto function, auto modifier) {
+			using T = decltype(type);
+			T twiddled = modifier(pgm->get<T>(arg));
+			function(glGetUniformLocation(handle, arg), 1, &twiddled);
 		};
 
 		glBindVertexArray(vertArray);
@@ -291,17 +340,24 @@ int main(int argc, char** argv)
 
 		sf::Vector2 size = window.getSize();
 
+		auto passthrough = [](auto a) { return a; };
+		auto twiddle = [&m](vec2 a){
+			a[0] = 2.0f*(float(m.get(1, 95)) / 127.0f - .5f) * .01f + a[0];
+			a[1] = 2.0f*(float(m.get(1, 62)) / 127.0f - .5f) * .01f + a[1];
+			return a;
+		};
+
 		glViewport(0, 0, size.x, size.y);
-		pushToOpenGL("center", vec2(), glUniform2fv);
-		pushToOpenGL("scale", rfkt::float_t(), glUniform1fv);
-		pushToOpenGL("exponent", vec2(), glUniform2fv);
-		pushToOpenGL("escape_radius", rfkt::float_t(), glUniform1fv);
-		pushToOpenGL("hue_shift", rfkt::float_t(), glUniform1fv);
-		pushToOpenGL("hue_stretch", rfkt::float_t(), glUniform1fv);
-		pushToOpenGL("max_iterations", rfkt::uint32_t(), glUniform1uiv);
-		pushToOpenGL("julia", vec2(), glUniform2fv);
-		pushToOpenGL("julia_c", vec2(), glUniform2fv);
-		pushToOpenGL("burning_ship", vec2(), glUniform2fv);
+		pushToOpenGL("center", vec2(), glUniform2fv, passthrough);
+		pushToOpenGL("scale", rfkt::float_t(), glUniform1fv, passthrough);
+		pushToOpenGL("exponent", vec2(), glUniform2fv, twiddle);
+		pushToOpenGL("escape_radius", rfkt::float_t(), glUniform1fv, passthrough);
+		pushToOpenGL("hue_shift", rfkt::float_t(), glUniform1fv, passthrough);
+		pushToOpenGL("hue_stretch", rfkt::float_t(), glUniform1fv, passthrough);
+		pushToOpenGL("max_iterations", rfkt::uint32_t(), glUniform1uiv, passthrough);
+		pushToOpenGL("julia", vec2(), glUniform2fv, passthrough);
+		pushToOpenGL("julia_c", vec2(), glUniform2fv,twiddle);
+		pushToOpenGL("burning_ship", vec2(), glUniform2fv, passthrough);
 		glUniform1f(glGetUniformLocation(handle, "surface_ratio"), float(size.y) / float(size.x));
 
 		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
