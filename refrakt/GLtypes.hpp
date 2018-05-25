@@ -166,6 +166,7 @@ namespace rfkt {
 
 		template<typename T> T* ptr() {
 			return std::visit([](auto&& v) -> T* {
+				// TODO: runtime exceptions for incompatible types
 				return (T*)&v;
 			}, static_cast<arg_t_base&>(*this));
 		}

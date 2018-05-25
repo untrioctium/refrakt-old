@@ -98,6 +98,14 @@ return {
 			tool_tip = "Abs() weight on components (both 1.0 for classic 'Burning Ship' fractal)",
 			child_names = {"Re", "Im"},
 			speed = .001
+		},
+
+		{
+			name = "hq_mode",
+			type = "uint32",
+			description = "Enable HQ rendering",
+			bounds = {0, 1},
+			tool_tip = "Enables HQ mode which may include higher precisions and anti-aliasing"
 		}
 	},
 

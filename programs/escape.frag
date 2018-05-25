@@ -13,6 +13,8 @@ uniform vec2 julia;
 uniform vec2 julia_c;
 uniform vec2 burning_ship;
 uniform float surface_ratio;
+uniform vec2 offset;
+uniform uint hq_mode;
 
 /**
  * @file complex.frag
@@ -239,18 +241,16 @@ vec3 hsvToRGB( vec3 hsv )
 	return vec3(0,0,0);
 }
 
-void main() {
-
-
-	vec2 orig = vec2( texCoord.x * (1.0/scale) / surface_ratio, texCoord.y * (1.0/scale) * -1) + center;
-	vec2 v = orig;
+vec3 mandelbrot( vec2 position )
+{
+	vec2 v = position;
 	
 	float escape = escape_radius * escape_radius;
     float r2 = 0.0;
 	
 	uint iter = 0;
 	
-	vec2 offset = vlerp(orig, julia_c, julia);
+	vec2 offset = vlerp(position, julia_c, julia);
 
     for (; iter < max_iterations && r2 < escape; ++iter)
     {
@@ -261,10 +261,29 @@ void main() {
 	float rat = float(iter)/float(max_iterations);
 	float lograt = log(float(iter))/log(float(max_iterations));
     if (r2 < escape)
-        color = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+        return vec3(1.0f, 1.0f, 1.0f);
     else {
 		float hue = fract(lograt * hue_stretch + hue_shift);
-		color = vec4(hsvToRGB(vec3(hue, 1 - lograt, lograt)), 1.0f);
+		return vec3(hsvToRGB(vec3(hue, 1 - lograt, lograt)));
 	}
-        
+}
+
+vec2 project_to_plane( vec2 coord ) {
+	return vec2( coord.x * (1.0/scale) / surface_ratio, coord.y * (1.0/scale) * -1) + center;
+}
+
+void main() {
+
+	if( hq_mode != 0 )
+	{
+		float y_off = offset.y / 4.0;
+		float x_off = offset.y / 4.0;
+
+		vec3 result = mandelbrot( project_to_plane( texCoord + vec2(x_off, y_off) ) ) + 
+					  mandelbrot( project_to_plane( texCoord + vec2(-x_off, y_off) ) ) +
+					  mandelbrot( project_to_plane( texCoord + vec2(-x_off, -y_off) ) ) +
+					  mandelbrot( project_to_plane( texCoord + vec2(x_off, -y_off) ) );
+
+		color = vec4(result * .25, 1.0);
+     } else color = vec4( mandelbrot( project_to_plane( texCoord )), 1.0);   
 }

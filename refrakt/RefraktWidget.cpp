@@ -83,7 +83,7 @@ std::string RefraktWidget::serialize() {
 	}
 
 	std::string result = out.dump();
-	result = "RFKT" + base64_encode((const unsigned char*) result.c_str(), result.size());
+	result = "RFKT" + base64_encode((const unsigned char*)result.c_str(), result.size());
 
 	return result;
 }
@@ -93,13 +93,12 @@ bool RefraktWidget::deserialize(std::string s) {
 
 	auto result = nlohmann::json::parse(base64_decode(s.substr(4)));
 
-	for (nlohmann::json::iterator it = result.begin(); it != result.end(); it++){
+	for (nlohmann::json::iterator it = result.begin(); it != result.end(); it++) {
 		this->parameters_[it.key()]["value"]["deserialize"](this->parameters_[it.key()]["value"], it.value());
 	}
 
 	return true;
 }
-
 
 void RefraktWidget::loadBindings()
 {
@@ -127,12 +126,12 @@ void RefraktWidget::loadBindings()
 			[]() { return arr_name(); }, // empty factory
 			[](arr_type init) { return arr_name(init); }, // single initializer
 			[](sol::variadic_args va) {
-			if (va.size() != arr_name::len) throw sol::error("error creating array");
+				if (va.size() != arr_name::len) throw sol::error("error creating array");
 
-			auto result = arr_name();
-			for (std::size_t i = 0; i < arr_name::len; i++) result[i] = va[i].get<arr_type>();
-			return result;
-		}
+				auto result = arr_name();
+				for (std::size_t i = 0; i < arr_name::len; i++) result[i] = va[i].get<arr_type>();
+				return result;
+			}
 		);
 
 		state.new_usertype<arr_name>(name,

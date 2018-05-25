@@ -164,7 +164,7 @@ void show_main_menu() {
 }
 
 void show_program_parameters(RefraktWidget& pgm) {
-	ImGui::Begin("Parameters", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoMove);
+	ImGui::Begin("Parameters", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoMove);
 
 	if (ImGui::BeginMenuBar()) {
 		if (ImGui::Button("Copy to Clipboard"))
@@ -177,9 +177,11 @@ void show_program_parameters(RefraktWidget& pgm) {
 
 		ImGui::EndMenuBar();
 	}
+	ImGui::Text("Click and drag left-right to change parameters.");
+	ImGui::Text("Double click to set.");
 	pgm.drawGui();
 
-	ImGui::SetWindowPos(ImVec2(0, ImGui::GetIO().DisplaySize.y - ImGui::GetWindowHeight()));
+	ImGui::SetWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2 - ImGui::GetWindowWidth() / 2, ImGui::GetIO().DisplaySize.y - ImGui::GetWindowHeight()));
 
 	ImGui::End();
 }
@@ -259,11 +261,15 @@ int main(int argc, char** argv)
 	std::cout << rfkt::arg_t::create("vec2").serialize() << std::endl;
 	
 	float fpsAvg = 0;
+	bool midiEnabled = false;
 
 	RtMidiIn *midiin = new RtMidiIn();
-	midiin->openPort(0);
-	midiin->ignoreTypes(false, false, false);
-
+	try {
+		midiin->openPort(0);
+		midiin->ignoreTypes(false, false, false);
+		midiEnabled = true;
+	}
+	catch (...) {}
 	MidiControllers m;
 
 	while (window.isOpen()) {
@@ -298,10 +304,9 @@ int main(int argc, char** argv)
 		}
 
 		std::vector<unsigned char> message;
-		int nBytes, i;
 		double stamp;
 
-		while (true) {
+		while (midiEnabled) {
 			stamp = midiin->getMessage(&message);
 			if (message.size() == 0) break;
 			if (message.size() != 3) continue;
@@ -350,15 +355,17 @@ int main(int argc, char** argv)
 		glViewport(0, 0, size.x, size.y);
 		pushToOpenGL("center", vec2(), glUniform2fv, passthrough);
 		pushToOpenGL("scale", rfkt::float_t(), glUniform1fv, passthrough);
-		pushToOpenGL("exponent", vec2(), glUniform2fv, twiddle);
+		pushToOpenGL("exponent", vec2(), glUniform2fv, passthrough);
 		pushToOpenGL("escape_radius", rfkt::float_t(), glUniform1fv, passthrough);
 		pushToOpenGL("hue_shift", rfkt::float_t(), glUniform1fv, passthrough);
 		pushToOpenGL("hue_stretch", rfkt::float_t(), glUniform1fv, passthrough);
 		pushToOpenGL("max_iterations", rfkt::uint32_t(), glUniform1uiv, passthrough);
 		pushToOpenGL("julia", vec2(), glUniform2fv, passthrough);
-		pushToOpenGL("julia_c", vec2(), glUniform2fv,twiddle);
+		pushToOpenGL("julia_c", vec2(), glUniform2fv, passthrough);
 		pushToOpenGL("burning_ship", vec2(), glUniform2fv, passthrough);
+		pushToOpenGL("hq_mode", rfkt::uint32_t(), glUniform1uiv, passthrough);
 		glUniform1f(glGetUniformLocation(handle, "surface_ratio"), float(size.y) / float(size.x));
+		glUniform2f(glGetUniformLocation(handle, "offset"), 1.0/float(size.x), 1.0/float(size.y));
 
 		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
