@@ -137,7 +137,7 @@
     <ClCompile Include="extern\RtMidi.cpp" />
     <ClCompile Include="GLtypes.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="RefraktWidget.cpp" />
+    <ClCompile Include="widget.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="extern\base64.h" />
@@ -152,7 +152,8 @@
     <ClInclude Include="extern\stb_textedit.h" />
     <ClInclude Include="extern\stb_truetype.h" />
     <ClInclude Include="GLtypes.hpp" />
-    <ClInclude Include="RefraktWidget.hpp" />
+    <ClInclude Include="type_helpers.hpp" />
+    <ClInclude Include="widget.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\programs\escape.frag" />

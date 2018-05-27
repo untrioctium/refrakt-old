@@ -2,6 +2,7 @@
 in vec2 texCoord;
 out vec4 color;
 
+
 uniform vec2 center;
 uniform float scale;
 uniform vec2 exponent;
@@ -15,6 +16,7 @@ uniform vec2 burning_ship;
 uniform float surface_ratio;
 uniform vec2 offset;
 uniform uint hq_mode;
+
 
 /**
  * @file complex.frag
@@ -257,9 +259,9 @@ vec3 mandelbrot( vec2 position )
         v = cPow(vlerp(v, vec2(abs(v.x), abs(v.y)), burning_ship), exponent) + offset;
         r2 = v.x * v.x + v.y * v.y;
     }
-
-	float rat = float(iter)/float(max_iterations);
-	float lograt = log(float(iter))/log(float(max_iterations));
+	
+	float smooth_iter = float(iter) - log(log(sqrt(r2)) / log(escape_radius)) / log(cAbs(exponent));
+	float lograt = log(smooth_iter)/log(float(max_iterations));
     if (r2 < escape)
         return vec3(1.0f, 1.0f, 1.0f);
     else {
@@ -269,7 +271,7 @@ vec3 mandelbrot( vec2 position )
 }
 
 vec2 project_to_plane( vec2 coord ) {
-	return vec2( coord.x * (1.0/scale) / surface_ratio, coord.y * (1.0/scale) * -1) + center;
+	return vec2( coord.x * (1.0/scale) * surface_ratio, coord.y * (1.0/scale) * -1) + center;
 }
 
 void main() {
@@ -285,5 +287,6 @@ void main() {
 					  mandelbrot( project_to_plane( texCoord + vec2(x_off, -y_off) ) );
 
 		color = vec4(result * .25, 1.0);
-     } else color = vec4( mandelbrot( project_to_plane( texCoord )), 1.0);   
+     } else color = vec4( mandelbrot( project_to_plane( texCoord )), 1.0);
+
 }

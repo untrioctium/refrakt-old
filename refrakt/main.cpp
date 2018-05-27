@@ -1,7 +1,5 @@
 #include "imgui.h"
 #include "imgui-SFML.h"
-#include "sol.hpp"
-#include "RtMidi.h"
 #include <GL/glew.h>
 #include <SFML/Graphics/RenderWindow.hpp>
 #include <SFML/System/Clock.hpp>
@@ -11,143 +9,19 @@
 #include <fstream>
 
 #include "GLtypes.hpp"
+#include "type_helpers.hpp"
 
-#include "RefraktWidget.hpp"
+#include "widget.hpp"
 
 using json = nlohmann::json;
-
-void interpret_midi(std::vector<uint8_t>& message, double time)
-{
-	uint8_t status = (message[0] >> 4) - 8;
-	uint8_t data1 = message[1];
-	uint8_t channel = message[0] & 15;
-
-	static std::string names[] = { "Note off", "Note on", "Key pressure", "Controller change", "Program change", "Channel pressure", "Pitch bend" };
-	static std::string byte1[] = { "key", "key", "key", "controller", "preset", "pressure", "fine" };
-	static std::string byte2[] = { "velocity", "velocity", "pressure", "value", "null", "null", "coarse" };
-
-	if (message.size() == 3)
-	{
-		uint8_t data2 = message[2];
-		printf("(C%d) %s: [%s: %d, %s: %d] (%f since last event)\n", channel, names[status].c_str(), byte1[status].c_str(), data1, byte2[status].c_str(), data2, time);
-	}
-	else printf("(C%d) %s: [%s: %d] (%f since last event)\n", channel, names[status].c_str(), byte1[status].c_str(), data1, time);
-}
 
 void checkErrors(std::string desc) {
 	GLenum e = glGetError();
 	if (e != GL_NO_ERROR) {
 		fprintf(stderr, "OpenGL error in \"%s\": %s (%d)\n", desc.c_str(), gluErrorString(e), e);
+		std::cin.get();
 		exit(20);
 	}
-}
-
-GLuint vertArray;
-GLuint posBuf;
-
-GLuint genRenderProg() {
-	GLuint progHandle = glCreateProgram();
-	GLuint vp = glCreateShader(GL_VERTEX_SHADER);
-	GLuint fp = glCreateShader(GL_FRAGMENT_SHADER);
-
-	const char *vpSrc[] = {
-		"#version 430\n",
-		"in vec2 pos;\
-		 out vec2 texCoord;\
-		 void main() {\
-			 texCoord = pos;\
-			 gl_Position = vec4(pos.x, pos.y, 0.0, 1.0);\
-		 }"
-	};
-
-	std::ifstream t("programs\\escape.frag");
-	std::string fpSrc((std::istreambuf_iterator<char>(t)),
-		std::istreambuf_iterator<char>());
-	const char* src = fpSrc.c_str();
-
-	glShaderSource(vp, 2, vpSrc, NULL);
-	glShaderSource(fp, 1, &src, NULL);
-
-	glCompileShader(vp);
-	int rvalue;
-	glGetShaderiv(vp, GL_COMPILE_STATUS, &rvalue);
-	if (!rvalue) {
-		fprintf(stderr, "Error in compiling vp\n");
-		exit(30);
-	}
-	glAttachShader(progHandle, vp);
-
-	glCompileShader(fp);
-	glGetShaderiv(fp, GL_COMPILE_STATUS, &rvalue);
-	if (!rvalue) {
-		fprintf(stderr, "Error in compiling the compute shader\n");
-		GLchar log[10240];
-		GLsizei length;
-		glGetShaderInfoLog(fp, 10239, &length, log);
-		fprintf(stderr, "Compiler log:\n%s\n", log);
-		std::cin.get();
-		exit(40);
-	}
-
-	glAttachShader(progHandle, fp);
-
-	glBindFragDataLocation(progHandle, 0, "color");
-	glLinkProgram(progHandle);
-
-	glGetProgramiv(progHandle, GL_LINK_STATUS, &rvalue);
-	if (!rvalue) {
-		fprintf(stderr, "Error in linking compute shader program\n");
-		GLchar log[10240];
-		GLsizei length;
-		glGetProgramInfoLog(progHandle, 10239, &length, log);
-		fprintf(stderr, "Linker log:\n%s\n", log);
-		std::cin.get();
-		exit(41);
-	}
-
-	glGenVertexArrays(1, &vertArray);
-	glBindVertexArray(vertArray);
-
-	glGenBuffers(1, &posBuf);
-	glBindBuffer(GL_ARRAY_BUFFER, posBuf);
-	float data[] = {
-		-1.0f, -1.0f,
-		-1.0f, 1.0f,
-		1.0f, -1.0f,
-		1.0f, 1.0f
-	};
-	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 8, data, GL_STREAM_DRAW);
-	GLint posPtr = glGetAttribLocation(progHandle, "pos");
-	glVertexAttribPointer(posPtr, 2, GL_FLOAT, GL_FALSE, 0, 0);
-	glEnableVertexAttribArray(posPtr);
-
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindVertexArray(0);
-
-	checkErrors("Render shaders");
-	return progHandle;
-}
-
-void show_lua_console(sol::state& state) {
-	ImGui::Begin("Lua Console");
-
-	static char command_buffer[1024] = { 0 };
-
-	if (ImGui::InputText("##command", command_buffer, 256, ImGuiInputTextFlags_EnterReturnsTrue))
-	{
-		ImGui::SetKeyboardFocusHere(-1);
-		std::string command = command_buffer;
-		command_buffer[0] = '\0';
-
-		std::cout << "$: " << command << std::endl;
-
-		std::string result = state.script(command, [](lua_State* L, sol::protected_function_result pfr) {
-			return pfr;
-		});
-
-		if (result != "nil\n") std::cout << result << std::endl;
-	}
-	ImGui::End();
 }
 
 void show_main_menu() {
@@ -163,54 +37,141 @@ void show_main_menu() {
 	}
 }
 
-void show_program_parameters(RefraktWidget& pgm) {
-	ImGui::Begin("Parameters", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoMove);
-
-	if (ImGui::BeginMenuBar()) {
-		if (ImGui::Button("Copy to Clipboard"))
-			ImGui::SetClipboardText(pgm.serialize().c_str());
-
-		ImGui::SameLine();
-
-		if (ImGui::Button("Load from Clipboard"))
-			pgm.deserialize(ImGui::GetClipboardText());
-
-		ImGui::EndMenuBar();
-	}
-	ImGui::Text("Click and drag left-right to change parameters.");
-	ImGui::Text("Double click to set.");
-	pgm.drawGui();
-
-	ImGui::SetWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2 - ImGui::GetWindowWidth() / 2, ImGui::GetIO().DisplaySize.y - ImGui::GetWindowHeight()));
-
-	ImGui::End();
-}
-
-class MidiControllers {
+class EscapeWidget : public refrakt::widget {
 public:
+	void initialize() {
+		render_prog_ = glCreateProgram();
+		GLuint vp = glCreateShader(GL_VERTEX_SHADER);
+		GLuint fp = glCreateShader(GL_FRAGMENT_SHADER);
 
-	std::uint8_t get(std::uint8_t channel, std::uint8_t controller) {
-		std::uint16_t id = mapToID(channel, controller);
+		const char *vpSrc[] = {
+			"#version 430\n",
+			"in vec2 pos;\
+		 out vec2 texCoord;\
+		 void main() {\
+			 texCoord = pos;\
+			 gl_Position = vec4(pos.x, pos.y, 0.0, 1.0);\
+		 }"
+		};
 
-		if (states_.count(id) == 0) return 0;
-		return states_[id];
+		std::ifstream t("programs\\escape.frag");
+		std::string fpSrc((std::istreambuf_iterator<char>(t)),
+			std::istreambuf_iterator<char>());
+		const char* src = fpSrc.c_str();
+
+		glShaderSource(vp, 2, vpSrc, NULL);
+		glShaderSource(fp, 1, &src, NULL);
+
+		glCompileShader(vp);
+		int rvalue;
+		glGetShaderiv(vp, GL_COMPILE_STATUS, &rvalue);
+		if (!rvalue) {
+			fprintf(stderr, "Error in compiling vp\n");
+			exit(30);
+		}
+		glAttachShader(render_prog_, vp);
+
+		glCompileShader(fp);
+		glGetShaderiv(fp, GL_COMPILE_STATUS, &rvalue);
+		if (!rvalue) {
+			fprintf(stderr, "Error in compiling the compute shader\n");
+			GLchar log[10240];
+			GLsizei length;
+			glGetShaderInfoLog(fp, 10239, &length, log);
+			fprintf(stderr, "Compiler log:\n%s\n", log);
+			std::cin.get();
+			exit(40);
+		}
+
+		glAttachShader(render_prog_, fp);
+
+		glBindFragDataLocation(render_prog_, 0, "color");
+		glLinkProgram(render_prog_);
+
+		glGetProgramiv(render_prog_, GL_LINK_STATUS, &rvalue);
+		if (!rvalue) {
+			fprintf(stderr, "Error in linking compute shader program\n");
+			GLchar log[10240];
+			GLsizei length;
+			glGetProgramInfoLog(render_prog_, 10239, &length, log);
+			fprintf(stderr, "Linker log:\n%s\n", log);
+			std::cin.get();
+			exit(41);
+		}
+
+		glGenVertexArrays(1, &vert_array_);
+		glBindVertexArray(vert_array_);
+
+		glGenBuffers(1, &pos_buf_);
+		glBindBuffer(GL_ARRAY_BUFFER, pos_buf_);
+		float data[] = {
+			-1.0f, -1.0f,
+			-1.0f, 1.0f,
+			1.0f, -1.0f,
+			1.0f, 1.0f
+		};
+		glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 8, data, GL_STREAM_DRAW);
+		GLint posPtr = glGetAttribLocation(render_prog_, "pos");
+		glVertexAttribPointer(posPtr, 2, GL_FLOAT, GL_FALSE, 0, 0);
+		glEnableVertexAttribArray(posPtr);
+
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindVertexArray(0);
+
+		checkErrors("Render shaders");
 	}
 
-	void set(std::uint8_t channel, std::uint8_t controller, std::uint8_t value) {
-		states_[mapToID(channel, controller)] = value;
+	auto create_parameter_set() -> refrakt::widget::parameter_set {
+		return refrakt::widget::parameter_set
+		{
+			{"center", refrakt::vec2{}},
+			{"scale", refrakt::float_t{1.0} },
+			{"hue_shift", refrakt::float_t{0.0} },
+			{"hue_stretch", refrakt::float_t{1.0} },
+			{"exponent", refrakt::vec2{2.0, 0.0} },
+			{ "escape_radius", refrakt::float_t{4.0} },
+			{ "max_iterations", refrakt::uint32_t{100} },
+			{ "julia", refrakt::vec2{0.0, 0.0} },
+			{ "julia_c", refrakt::vec2{0.0, 0.0} },
+			{ "burning_ship", refrakt::vec2{0.0, 0.0} },
+			{ "hq_mode", refrakt::uint32_t{0} },
+			{ "surface_ratio", refrakt::float_t{} },
+			{ "offset", refrakt::vec2{} }
+		};
 	}
+
+	auto operator()(const refrakt::widget::parameter_set& p) -> refrakt::widget::parameter_set {
+
+		glUseProgram(render_prog_);
+		checkErrors("use program");
+		glBindVertexArray(vert_array_);
+		checkErrors("bind array");
+		glBindBuffer(GL_ARRAY_BUFFER, pos_buf_);
+		checkErrors("bind buffer");
+		for (auto& kv : p) {
+			refrakt::opengl::type_helpers::push(glGetUniformLocation(render_prog_, kv.first.c_str()), kv.second);
+		}
+
+		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+		checkErrors("draw array");
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindVertexArray(0);
+		glUseProgram(0);
+
+
+		return {};
+	}
+
+	bool validate(const refrakt::widget::parameter_set &) { return true;  }
 
 private:
-
-	static std::uint16_t mapToID(std::uint8_t channel, std::uint8_t controller) {
-		return (std::uint16_t(channel) << 8) + controller;
-	}
-	std::map<std::uint16_t, std::uint8_t> states_;
+	GLuint render_prog_;
+	GLuint vert_array_;
+	GLuint pos_buf_;
 };
 
 int main(int argc, char** argv)
 {
-	/*midi stuff*/
 	json settings;
 	std::ifstream("settings.json") >> settings;
 
@@ -242,35 +203,23 @@ int main(int argc, char** argv)
 	glewExperimental = true;
 	glewInit();
 
-	GLuint handle = genRenderProg();
-
 	window.setActive();
 	ImGui::SFML::Init(window);
 
-	auto pgm = RefraktWidget::load("escape.lua");
+	EscapeWidget w;
+	w.initialize();
+
+	auto param = w.create_parameter_set();
+
 	char cmd_buf[256] = { '\0' };
 
 	bool showGui = true;
 
 	sf::Clock deltaClock;
-	auto lol = rfkt::arg_t(bvec4(false));
-	auto jej = lol.ptr<bool>();
-	jej[0] = 2;
 
-	std::cout << lol.serialize() << std::endl;
-	std::cout << rfkt::arg_t::create("vec2").serialize() << std::endl;
+	std::cout << refrakt::type_string(refrakt::arg_t(refrakt::vec2())) << std::endl;
 	
 	float fpsAvg = 0;
-	bool midiEnabled = false;
-
-	RtMidiIn *midiin = new RtMidiIn();
-	try {
-		midiin->openPort(0);
-		midiin->ignoreTypes(false, false, false);
-		midiEnabled = true;
-	}
-	catch (...) {}
-	MidiControllers m;
 
 	while (window.isOpen()) {
 
@@ -299,25 +248,9 @@ int main(int argc, char** argv)
 					window.create(sf::VideoMode::getDesktopMode(), "refrakt", sf::Style::None, ctxSettings);
 				}
 				fullscreen ^= true;
-				handle = genRenderProg();
 			}
 		}
 
-		std::vector<unsigned char> message;
-		double stamp;
-
-		while (midiEnabled) {
-			stamp = midiin->getMessage(&message);
-			if (message.size() == 0) break;
-			if (message.size() != 3) continue;
-			interpret_midi(message, stamp);
-			int status = (message[0] >> 4) - 8;
-			if (status != 3) continue;
-
-			uint8_t channel = message[0] & 0b1111;
-
-			m.set(channel, message[1], message[2]);
-		}
 
 		window.clear();
 
@@ -329,47 +262,15 @@ int main(int argc, char** argv)
 		if (showGui)
 		{
 			show_main_menu();
-			show_program_parameters(*pgm);
 		}
 		//pgm->lua_state.script("lol:gui( format )");
+		
+		auto size = window.getSize();
 
-		auto pushToOpenGL = [pgm, handle](auto arg, auto type, auto function, auto modifier) {
-			using T = decltype(type);
-			T twiddled = modifier(pgm->get<T>(arg));
-			function(glGetUniformLocation(handle, arg), 1, &twiddled);
-		};
-
-		glBindVertexArray(vertArray);
-		glBindBuffer(GL_ARRAY_BUFFER, posBuf);
-		glUseProgram(handle);
-
-		sf::Vector2 size = window.getSize();
-
-		auto passthrough = [](auto a) { return a; };
-		auto twiddle = [&m](vec2 a){
-			a[0] = 2.0f*(float(m.get(1, 95)) / 127.0f - .5f) * .01f + a[0];
-			a[1] = 2.0f*(float(m.get(1, 62)) / 127.0f - .5f) * .01f + a[1];
-			return a;
-		};
-
+		param["surface_ratio"] = refrakt::float_t{ float(size.x) / float(size.y) };
+		param["offset"] = refrakt::vec2{ 1.0f/float(size.x), 1.0f/float(size.y) };
 		glViewport(0, 0, size.x, size.y);
-		pushToOpenGL("center", vec2(), glUniform2fv, passthrough);
-		pushToOpenGL("scale", rfkt::float_t(), glUniform1fv, passthrough);
-		pushToOpenGL("exponent", vec2(), glUniform2fv, passthrough);
-		pushToOpenGL("escape_radius", rfkt::float_t(), glUniform1fv, passthrough);
-		pushToOpenGL("hue_shift", rfkt::float_t(), glUniform1fv, passthrough);
-		pushToOpenGL("hue_stretch", rfkt::float_t(), glUniform1fv, passthrough);
-		pushToOpenGL("max_iterations", rfkt::uint32_t(), glUniform1uiv, passthrough);
-		pushToOpenGL("julia", vec2(), glUniform2fv, passthrough);
-		pushToOpenGL("julia_c", vec2(), glUniform2fv, passthrough);
-		pushToOpenGL("burning_ship", vec2(), glUniform2fv, passthrough);
-		pushToOpenGL("hq_mode", rfkt::uint32_t(), glUniform1uiv, passthrough);
-		glUniform1f(glGetUniformLocation(handle, "surface_ratio"), float(size.y) / float(size.x));
-		glUniform2f(glGetUniformLocation(handle, "offset"), 1.0/float(size.x), 1.0/float(size.y));
-
-		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-		glBindVertexArray(0);
+		w(param);
 
 		if (showGui) {
 			window.pushGLStates();

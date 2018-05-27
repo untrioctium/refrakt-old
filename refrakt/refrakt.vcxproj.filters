@@ -51,10 +51,10 @@
     <ClCompile Include="extern\base64.cpp">
       <Filter>Source Files\extern</Filter>
     </ClCompile>
-    <ClCompile Include="RefraktWidget.cpp">
+    <ClCompile Include="GLtypes.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="GLtypes.cpp">
+    <ClCompile Include="widget.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -95,7 +95,10 @@
     <ClInclude Include="extern\base64.h">
       <Filter>Header Files\extern</Filter>
     </ClInclude>
-    <ClInclude Include="RefraktWidget.hpp">
+    <ClInclude Include="widget.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="type_helpers.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
