@@ -57,6 +57,12 @@
     <ClCompile Include="widget.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="type_helpers.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="extern\TextEditor.cpp">
+      <Filter>Source Files\extern\ImGui</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="extern\imconfig.h">
@@ -100,6 +106,9 @@
     </ClInclude>
     <ClInclude Include="type_helpers.hpp">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="extern\TextEditor.h">
+      <Filter>Header Files\extern</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

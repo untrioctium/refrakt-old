@@ -2,13 +2,16 @@
 in vec2 texCoord;
 out vec4 color;
 
+struct Hue {
+	float shift;
+	float stretch;
+};
 
 uniform vec2 center;
 uniform float scale;
 uniform vec2 exponent;
 uniform float escape_radius;
-uniform float hue_shift;
-uniform float hue_stretch;
+uniform Hue hue;
 uniform uint max_iterations;
 uniform vec2 julia;
 uniform vec2 julia_c;
@@ -254,39 +257,46 @@ vec3 mandelbrot( vec2 position )
 	
 	vec2 offset = vlerp(position, julia_c, julia);
 
+	float min_distance = 1000000000;
     for (; iter < max_iterations && r2 < escape; ++iter)
     {
-        v = cPow(vlerp(v, vec2(abs(v.x), abs(v.y)), burning_ship), exponent) + offset;
+        v = vlerp(cPow(v, exponent) + offset, cPow(vec2(abs(v.x), abs(v.y)), exponent) + offset, burning_ship);
         r2 = v.x * v.x + v.y * v.y;
+		min_distance = min(v.x * v.x, min_distance);
     }
 	
+	min_distance = sqrt(min_distance);
+
 	float smooth_iter = float(iter) - log(log(sqrt(r2)) / log(escape_radius)) / log(cAbs(exponent));
 	float lograt = log(smooth_iter)/log(float(max_iterations));
     if (r2 < escape)
         return vec3(1.0f, 1.0f, 1.0f);
     else {
-		float hue = fract(lograt * hue_stretch + hue_shift);
+		float hue = fract(lograt * hue.stretch + hue.shift);
 		return vec3(hsvToRGB(vec3(hue, 1 - lograt, lograt)));
 	}
 }
 
 vec2 project_to_plane( vec2 coord ) {
-	return vec2( coord.x * (1.0/scale) * surface_ratio, coord.y * (1.0/scale) * -1) + center;
+	vec2 proj = vec2( coord.x * (1.0/scale) * surface_ratio, coord.y * (1.0/scale) * -1) + center;
+	return proj;
 }
 
 void main() {
+
+	vec2 coord = texCoord.xy;
 
 	if( hq_mode != 0 )
 	{
 		float y_off = offset.y / 4.0;
 		float x_off = offset.y / 4.0;
 
-		vec3 result = mandelbrot( project_to_plane( texCoord + vec2(x_off, y_off) ) ) + 
-					  mandelbrot( project_to_plane( texCoord + vec2(-x_off, y_off) ) ) +
-					  mandelbrot( project_to_plane( texCoord + vec2(-x_off, -y_off) ) ) +
-					  mandelbrot( project_to_plane( texCoord + vec2(x_off, -y_off) ) );
+		vec3 result = mandelbrot( project_to_plane( coord + vec2(x_off, y_off) ) ) + 
+					  mandelbrot( project_to_plane( coord + vec2(-x_off, y_off) ) ) +
+					  mandelbrot( project_to_plane( coord + vec2(-x_off, -y_off) ) ) +
+					  mandelbrot( project_to_plane( coord + vec2(x_off, -y_off) ) );
 
 		color = vec4(result * .25, 1.0);
-     } else color = vec4( mandelbrot( project_to_plane( texCoord )), 1.0);
+     } else color = vec4( mandelbrot( project_to_plane( coord )), 1.0);
 
 }

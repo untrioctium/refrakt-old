@@ -97,7 +97,7 @@
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(PROJECTDIR)lib\glew-2.1.0\lib\;$(PROJECTDIR)lib\SFML-2.4.2\lib;$(PROJECTDIR)lib\rtmidi;$(PROJECTDIR)lib\lua;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>opengl32.lib;glu32.lib;glew32s.lib;sfml-graphics.lib;sfml-window.lib;sfml-system.lib;lua53.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opengl32.lib;glu32.lib;glew32s.lib;sfml-graphics-d.lib;sfml-window-d.lib;sfml-system-d.lib;lua53.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -135,8 +135,10 @@
     <ClCompile Include="extern\imgui_demo.cpp" />
     <ClCompile Include="extern\imgui_draw.cpp" />
     <ClCompile Include="extern\RtMidi.cpp" />
+    <ClCompile Include="extern\TextEditor.cpp" />
     <ClCompile Include="GLtypes.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="type_helpers.cpp" />
     <ClCompile Include="widget.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -151,6 +153,7 @@
     <ClInclude Include="extern\stb_rect_pack.h" />
     <ClInclude Include="extern\stb_textedit.h" />
     <ClInclude Include="extern\stb_truetype.h" />
+    <ClInclude Include="extern\TextEditor.h" />
     <ClInclude Include="GLtypes.hpp" />
     <ClInclude Include="type_helpers.hpp" />
     <ClInclude Include="widget.hpp" />

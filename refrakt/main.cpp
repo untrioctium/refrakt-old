@@ -2,15 +2,17 @@
 #include "imgui-SFML.h"
 #include <GL/glew.h>
 #include <SFML/Graphics/RenderWindow.hpp>
+#include <SFML/Graphics/Sprite.hpp>
 #include <SFML/System/Clock.hpp>
 #include <SFML/Window/Event.hpp>
+#include <SFML/Graphics/RenderTexture.hpp>
 #include <iostream>
 #include <string>
 #include <fstream>
 
 #include "GLtypes.hpp"
 #include "type_helpers.hpp"
-
+#include "TextEditor.h"
 #include "widget.hpp"
 
 using json = nlohmann::json;
@@ -37,9 +39,10 @@ void show_main_menu() {
 	}
 }
 
+
 class EscapeWidget : public refrakt::widget {
 public:
-	void initialize() {
+	void initialize(const std::string& source) {
 		render_prog_ = glCreateProgram();
 		GLuint vp = glCreateShader(GL_VERTEX_SHADER);
 		GLuint fp = glCreateShader(GL_FRAGMENT_SHADER);
@@ -54,10 +57,7 @@ public:
 		 }"
 		};
 
-		std::ifstream t("programs\\escape.frag");
-		std::string fpSrc((std::istreambuf_iterator<char>(t)),
-			std::istreambuf_iterator<char>());
-		const char* src = fpSrc.c_str();
+		const char* src = source.c_str();
 
 		glShaderSource(vp, 2, vpSrc, NULL);
 		glShaderSource(fp, 1, &src, NULL);
@@ -125,15 +125,17 @@ public:
 		return refrakt::widget::parameter_set
 		{
 			{"center", refrakt::vec2{}},
-			{"scale", refrakt::float_t{1.0} },
-			{"hue_shift", refrakt::float_t{0.0} },
-			{"hue_stretch", refrakt::float_t{1.0} },
-			{"exponent", refrakt::vec2{2.0, 0.0} },
-			{ "escape_radius", refrakt::float_t{4.0} },
-			{ "max_iterations", refrakt::uint32_t{100} },
-			{ "julia", refrakt::vec2{0.0, 0.0} },
-			{ "julia_c", refrakt::vec2{0.0, 0.0} },
-			{ "burning_ship", refrakt::vec2{0.0, 0.0} },
+			{"scale", refrakt::float_t{.75} },
+			{"hue", refrakt::struct_t{
+				{"shift", refrakt::float_t{ 0.200f }},
+				{"stretch", refrakt::float_t{1.0} }
+			}},
+			{"exponent", refrakt::vec2{ 1.9029998779296875, 0.8349999785423279 } },
+			{ "escape_radius", refrakt::float_t{40000.0} },
+			{ "max_iterations", refrakt::uint32_t{300} },
+			{ "julia", refrakt::vec2{1.0, 1.0} },
+			{ "julia_c", refrakt::vec2{ 0.29200002551078796, -0.04599998891353607 } },
+			{ "burning_ship", refrakt::vec2{1.0, 1.0} },
 			{ "hq_mode", refrakt::uint32_t{0} },
 			{ "surface_ratio", refrakt::float_t{} },
 			{ "offset", refrakt::vec2{} }
@@ -148,8 +150,8 @@ public:
 		checkErrors("bind array");
 		glBindBuffer(GL_ARRAY_BUFFER, pos_buf_);
 		checkErrors("bind buffer");
-		for (auto& kv : p) {
-			refrakt::opengl::type_helpers::push(glGetUniformLocation(render_prog_, kv.first.c_str()), kv.second);
+		for (auto&& kv : p) {
+			refrakt::type_helpers::opengl::push(render_prog_, kv.first, kv.second);
 		}
 
 		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
@@ -162,13 +164,80 @@ public:
 		return {};
 	}
 
-	bool validate(const refrakt::widget::parameter_set &) { return true;  }
+	bool validate(const refrakt::widget::parameter_set &) { return true; }
+
+	auto parameter_info(const std::string& name) -> refrakt::widget::parameter_meta {
+		static std::map<std::string, refrakt::widget::parameter_meta> meta{
+			{"center", { 
+				"Camera center", 
+				"Center point of the viewing window", 
+				{-5.0, 5.0}, 
+				.001f
+			}},
+			{ "scale",{ "Picture Scale", "Picture scale, where 2 means that the vertical length is 1/2 units",{ -5.0, 5.0 }, .001f } }
+		};
+
+		return meta[name];
+	}
 
 private:
 	GLuint render_prog_;
 	GLuint vert_array_;
 	GLuint pos_buf_;
 };
+
+void imgui_experiment_window() {
+	ImGui::Begin("Testing");
+	ImGui::Text("Just a test");
+	
+	static const std::size_t total_samples = 100;
+	static sf::Clock clock;
+	static std::vector<float> frame_times(total_samples);;
+
+	frame_times.push_back(static_cast<float>(clock.restart().asMicroseconds())/1000.0);
+	frame_times.erase(frame_times.begin());
+
+	ImGui::PlotLines("Frame times", frame_times.data(), frame_times.size(), 0, 0, 0, 100);
+	
+	static float s;
+	ImGui::SliderFloat("##slide", &s, 0, 1);
+	if (ImGui::BeginPopupContextItem()) {
+		ImGui::TextDisabled("Options");
+		ImGui::Separator();
+		if (ImGui::Selectable("Modify twiddle")) ImGui::OpenPopup("Delete?");
+		if (ImGui::BeginPopupModal("Delete?", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+		{
+			ImGui::Text("All those beautiful files will be deleted.\nThis operation cannot be undone!\n\n");
+			ImGui::Separator();
+
+			//static int dummy_i = 0;
+			//ImGui::Combo("Combo", &dummy_i, "Delete\0Delete harder\0");
+
+			static bool dont_ask_me_next_time = false;
+			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
+			ImGui::Checkbox("Don't ask me next time", &dont_ask_me_next_time);
+			ImGui::PopStyleVar();
+
+			if (ImGui::Button("OK", ImVec2(120, 0))) { ImGui::CloseCurrentPopup(); }
+			ImGui::SetItemDefaultFocus();
+			ImGui::SameLine();
+			if (ImGui::Button("Cancel", ImVec2(120, 0))) { ImGui::CloseCurrentPopup(); }
+			ImGui::EndPopup();
+		}
+
+
+		if (ImGui::IsItemHovered())
+			ImGui::SetTooltip("I am a tooltip");
+
+		ImGui::Separator();
+		if (ImGui::Selectable("Set bounds")) std::cout << "lel" << std::endl;
+		ImGui::EndPopup();
+	}
+	ImGui::SameLine();
+	ImGui::Text("Slider");
+	ImGui::Separator();
+	ImGui::End();
+}
 
 int main(int argc, char** argv)
 {
@@ -206,20 +275,28 @@ int main(int argc, char** argv)
 	window.setActive();
 	ImGui::SFML::Init(window);
 
+	std::ifstream t("programs\\escape.frag");
+	std::string fpSrc((std::istreambuf_iterator<char>(t)),
+		std::istreambuf_iterator<char>());
+
+
 	EscapeWidget w;
-	w.initialize();
+	w.initialize(fpSrc);
 
 	auto param = w.create_parameter_set();
-
-	char cmd_buf[256] = { '\0' };
 
 	bool showGui = true;
 
 	sf::Clock deltaClock;
 
-	std::cout << refrakt::type_string(refrakt::arg_t(refrakt::vec2())) << std::endl;
-	
-	float fpsAvg = 0;
+	/*TextEditor editor;
+	auto lang = TextEditor::LanguageDefinition::GLSL();
+	TextEditor::Identifier id;
+	id.mDeclaration = std::string("two float vector");
+	lang.mIdentifiers.insert({ "vec2", id });
+	editor.SetLanguageDefinition(lang);
+
+	editor.SetText(fpSrc);*/
 
 	while (window.isOpen()) {
 
@@ -238,7 +315,7 @@ int main(int argc, char** argv)
 				showGui ^= true;
 
 			if (event.type == sf::Event::KeyReleased && event.key.code == sf::Keyboard::Key::F1) {
-				if( fullscreen )
+				if (fullscreen)
 					window.create(screenInfo, "refrakt", sf::Style::Default, ctxSettings);
 				else
 				{
@@ -248,27 +325,44 @@ int main(int argc, char** argv)
 					window.create(sf::VideoMode::getDesktopMode(), "refrakt", sf::Style::None, ctxSettings);
 				}
 				fullscreen ^= true;
+				w.initialize(fpSrc);
 			}
 		}
 
 
 		window.clear();
-
-
-		ImGui::SFML::Update(window, deltaClock.restart());
-
-		//ImGui::ShowTestWindow();
-		//show_lua_console(pgm->getLuaState());
-		if (showGui)
-		{
-			show_main_menu();
-		}
-		//pgm->lua_state.script("lol:gui( format )");
-		
 		auto size = window.getSize();
 
+		ImGui::SFML::Update(window, deltaClock.restart());
+		if (showGui)
+		{
+			//ImGui::ShowTestWindow();
+			show_main_menu();
+			//imgui_experiment_window();
+
+			/*ImGui::Begin("Edtior"); {
+				editor.Render("TextEditor");
+				//editor.IsTextChanged
+				
+			} ImGui::End();*/
+		}
+
+		ImGui::Begin("Parameters");
+		refrakt::type_helpers::imgui::display(param["center"], "center", refrakt::dvec2{ -5.0, 5.0 }, .001);
+		refrakt::type_helpers::imgui::display(param["scale"], "scale", refrakt::dvec2{ .5, 1000.0 }, .05);
+		refrakt::type_helpers::imgui::display(param.get<refrakt::struct_t>("hue").get("shift"), "hue_shift", refrakt::dvec2{ 0, 1 }, .0001);
+		refrakt::type_helpers::imgui::display(param.get<refrakt::struct_t>("hue").get("stretch"), "hue_stretch", refrakt::dvec2{ 0, 4 }, .001);
+		refrakt::type_helpers::imgui::display(param["exponent"], "exponent", refrakt::dvec2{ -4.0, 4.0 }, .001);
+		refrakt::type_helpers::imgui::display(param["escape_radius"], "escape_radius", refrakt::dvec2{ 0, 100.0 }, .001);
+		refrakt::type_helpers::imgui::display(param["max_iterations"], "escape", refrakt::dvec2{ 0, 1000.0 }, 1);
+		refrakt::type_helpers::imgui::display(param["julia"], "julia", refrakt::dvec2{ 0, 1 }, 1);
+		refrakt::type_helpers::imgui::display(param["julia_c"], "julia_c", refrakt::dvec2{ -2, 2 }, .005);
+		refrakt::type_helpers::imgui::display(param["burning_ship"], "burning_ship", refrakt::dvec2{ 0, 1 }, 1);
+		refrakt::type_helpers::imgui::display(param["hq_mode"], "hq_mode", refrakt::dvec2{ 0, 1 }, 1);
+		ImGui::End();
+
 		param["surface_ratio"] = refrakt::float_t{ float(size.x) / float(size.y) };
-		param["offset"] = refrakt::vec2{ 1.0f/float(size.x), 1.0f/float(size.y) };
+		param["offset"] = refrakt::vec2{ 1.0f / size.x, 1.0f / size.y };
 		glViewport(0, 0, size.x, size.y);
 		w(param);
 
@@ -277,8 +371,8 @@ int main(int argc, char** argv)
 			ImGui::SFML::Render(window);
 			window.popGLStates();
 
-
-		} else ImGui::EndFrame();
+		}
+		else ImGui::EndFrame();
 		window.display();
 	}
 

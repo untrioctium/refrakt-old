@@ -1,7 +1,7 @@
 {
 	"width": 1280,
 	"height": 720,
-	"framerate": 60,
+	"framerate": 144,
 	"ogl" : {
 		"depth_buffer_bits": 24,
 		"stencil_buffer_bits": 8,
