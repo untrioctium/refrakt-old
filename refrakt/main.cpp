@@ -124,7 +124,7 @@ public:
 	auto create_parameter_set() -> refrakt::widget::parameter_set {
 		return refrakt::widget::parameter_set
 		{
-			{"center", refrakt::vec2{}},
+			/*{"center", refrakt::vec2{}},
 			{"scale", refrakt::float_t{.75} },
 			{"hue", refrakt::struct_t{
 				{"shift", refrakt::float_t{ 0.200f }},
@@ -138,7 +138,25 @@ public:
 			{ "burning_ship", refrakt::vec2{1.0, 1.0} },
 			{ "hq_mode", refrakt::uint32_t{0} },
 			{ "surface_ratio", refrakt::float_t{} },
-			{ "offset", refrakt::vec2{} }
+			{ "offset", refrakt::vec2{} },
+			{ "time", refrakt::float_t{} }*/
+
+			{ "center", refrakt::vec2{-0.016f, 1.006f} },
+		{ "scale", refrakt::float_t{ 56.05f } },
+		{ "hue", refrakt::struct_t{
+			{ "shift", refrakt::float_t{ 0.505300f } },
+		{ "stretch", refrakt::float_t{ 2.207f } }
+		} },
+		{ "exponent", refrakt::vec2{ 2, 0 } },
+		{ "escape_radius", refrakt::float_t{ 16 } },
+		{ "max_iterations", refrakt::uint32_t{ 100 } },
+		{ "julia", refrakt::vec2{ 0.0, 0.0 } },
+		{ "julia_c", refrakt::vec2{ 0.29200002551078796, -0.04599998891353607 } },
+		{ "burning_ship", refrakt::vec2{ 0.0, 0.0 } },
+		{ "hq_mode", refrakt::uint32_t{ 0 } },
+		{ "surface_ratio", refrakt::float_t{} },
+		{ "offset", refrakt::vec2{} },
+		{ "time", refrakt::float_t{} }
 		};
 	}
 
@@ -288,16 +306,20 @@ int main(int argc, char** argv)
 	bool showGui = true;
 
 	sf::Clock deltaClock;
+	sf::Clock timer;
 
-	/*TextEditor editor;
+	TextEditor editor;
 	auto lang = TextEditor::LanguageDefinition::GLSL();
 	TextEditor::Identifier id;
 	id.mDeclaration = std::string("two float vector");
 	lang.mIdentifiers.insert({ "vec2", id });
 	editor.SetLanguageDefinition(lang);
 
-	editor.SetText(fpSrc);*/
+	editor.SetText(fpSrc);
 
+	std::cout << sizeof(refrakt::struct_t) << std::endl;
+	std::cout << sizeof(refrakt::arg_t) << std::endl;
+	float time = 0;
 	while (window.isOpen()) {
 
 		sf::Event event;
@@ -340,11 +362,10 @@ int main(int argc, char** argv)
 			show_main_menu();
 			//imgui_experiment_window();
 
-			/*ImGui::Begin("Edtior"); {
-				editor.Render("TextEditor");
-				//editor.IsTextChanged
-				
-			} ImGui::End();*/
+			//ImGui::Begin("Edtior"); {
+			//	editor.Render("TextEditor");
+			//	
+			//} ImGui::End();
 		}
 
 		ImGui::Begin("Parameters");
@@ -363,6 +384,7 @@ int main(int argc, char** argv)
 
 		param["surface_ratio"] = refrakt::float_t{ float(size.x) / float(size.y) };
 		param["offset"] = refrakt::vec2{ 1.0f / size.x, 1.0f / size.y };
+		param["time"] = refrakt::float_t{ time };
 		glViewport(0, 0, size.x, size.y);
 		w(param);
 
@@ -374,6 +396,7 @@ int main(int argc, char** argv)
 		}
 		else ImGui::EndFrame();
 		window.display();
+		time += timer.restart().asMilliseconds() / 1000.0;
 	}
 
 	ImGui::SFML::Shutdown();
