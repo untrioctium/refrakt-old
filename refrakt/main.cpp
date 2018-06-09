@@ -43,7 +43,7 @@ void show_main_menu() {
 class EscapeWidget : public refrakt::widget {
 public:
 	void initialize(const std::string& source) {
-		render_prog_ = glCreateProgram();
+		GLuint handle = glCreateProgram();
 		GLuint vp = glCreateShader(GL_VERTEX_SHADER);
 		GLuint fp = glCreateShader(GL_FRAGMENT_SHADER);
 
@@ -69,34 +69,29 @@ public:
 			fprintf(stderr, "Error in compiling vp\n");
 			exit(30);
 		}
-		glAttachShader(render_prog_, vp);
+		glAttachShader(handle, vp);
 
 		glCompileShader(fp);
 		glGetShaderiv(fp, GL_COMPILE_STATUS, &rvalue);
 		if (!rvalue) {
-			fprintf(stderr, "Error in compiling the compute shader\n");
 			GLchar log[10240];
 			GLsizei length;
 			glGetShaderInfoLog(fp, 10239, &length, log);
-			fprintf(stderr, "Compiler log:\n%s\n", log);
-			std::cin.get();
-			exit(40);
+			throw refrakt::widget::compile_exception(log);
 		}
 
-		glAttachShader(render_prog_, fp);
+		glAttachShader(handle, fp);
 
-		glBindFragDataLocation(render_prog_, 0, "color");
-		glLinkProgram(render_prog_);
+		glBindFragDataLocation(handle, 0, "color");
+		glLinkProgram(handle);
 
-		glGetProgramiv(render_prog_, GL_LINK_STATUS, &rvalue);
+		glGetProgramiv(handle, GL_LINK_STATUS, &rvalue);
 		if (!rvalue) {
-			fprintf(stderr, "Error in linking compute shader program\n");
 			GLchar log[10240];
 			GLsizei length;
 			glGetProgramInfoLog(render_prog_, 10239, &length, log);
-			fprintf(stderr, "Linker log:\n%s\n", log);
-			std::cin.get();
-			exit(41);
+			throw refrakt::widget::compile_exception(log);
+
 		}
 
 		glGenVertexArrays(1, &vert_array_);
@@ -111,14 +106,14 @@ public:
 			1.0f, 1.0f
 		};
 		glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 8, data, GL_STREAM_DRAW);
-		GLint posPtr = glGetAttribLocation(render_prog_, "pos");
+		GLint posPtr = glGetAttribLocation(handle, "pos");
 		glVertexAttribPointer(posPtr, 2, GL_FLOAT, GL_FALSE, 0, 0);
 		glEnableVertexAttribArray(posPtr);
 
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		glBindVertexArray(0);
 
-		checkErrors("Render shaders");
+		render_prog_ = handle;
 	}
 
 	auto create_parameter_set() -> refrakt::widget::parameter_set {
@@ -156,7 +151,8 @@ public:
 		{ "hq_mode", refrakt::uint32_t{ 0 } },
 		{ "surface_ratio", refrakt::float_t{} },
 		{ "offset", refrakt::vec2{} },
-		{ "time", refrakt::float_t{} }
+		{ "time", refrakt::float_t{} },
+		{ "gamma", refrakt::float_t{1.0} }
 		};
 	}
 
@@ -362,10 +358,19 @@ int main(int argc, char** argv)
 			show_main_menu();
 			//imgui_experiment_window();
 
-			//ImGui::Begin("Edtior"); {
-			//	editor.Render("TextEditor");
-			//	
-			//} ImGui::End();
+			ImGui::Begin("Editor"); {
+				if (ImGui::Button("Compile")) {
+					try {
+						w.initialize(editor.GetText());
+						fpSrc = editor.GetText();
+					}
+					catch (refrakt::widget::compile_exception& e) {
+						std::cout << e.what() << std::endl;
+					}
+				}
+				editor.Render("TextEditor");
+				
+			} ImGui::End();
 		}
 
 		ImGui::Begin("Parameters");
@@ -380,6 +385,7 @@ int main(int argc, char** argv)
 		refrakt::type_helpers::imgui::display(param["julia_c"], "julia_c", refrakt::dvec2{ -2, 2 }, .005);
 		refrakt::type_helpers::imgui::display(param["burning_ship"], "burning_ship", refrakt::dvec2{ 0, 1 }, 1);
 		refrakt::type_helpers::imgui::display(param["hq_mode"], "hq_mode", refrakt::dvec2{ 0, 1 }, 1);
+		refrakt::type_helpers::imgui::display(param["gamma"], "gamma", refrakt::dvec2{ 0, 3 }, .0001);
 		ImGui::End();
 
 		param["surface_ratio"] = refrakt::float_t{ float(size.x) / float(size.y) };
@@ -390,6 +396,7 @@ int main(int argc, char** argv)
 
 		if (showGui) {
 			window.pushGLStates();
+			window.resetGLStates();
 			ImGui::SFML::Render(window);
 			window.popGLStates();
 

@@ -64,7 +64,7 @@ namespace refrakt::type_helpers::imgui {
 	}
 
 	template< typename T >
-	bool display(T& value, const std::string& description, refrakt::dvec2 bounds, const float speed) { return false; }
+	bool display(T& value, const std::string& description, refrakt::dvec2 bounds, const float speed) { return false; } // TODO: struct_t and array_t handling 
 
 	template< typename T, std::size_t s >
 	bool display(refrakt::static_array_t<T, s>& value, const std::string& description, refrakt::dvec2 bounds, const float speed) {
@@ -82,5 +82,5 @@ namespace refrakt::type_helpers::imgui {
 
 namespace refrakt::type_helpers {
 	auto factory(const std::string& name) -> refrakt::arg_t;
-	inline bool is_same_type(const refrakt::arg_t& a, const refrakt::arg_t& b) { return a.index() == b.index(); }
+	inline bool are_same_type(const refrakt::arg_t& a, const refrakt::arg_t& b) { return a.index() == b.index(); }
 }

@@ -20,6 +20,7 @@ uniform float surface_ratio;
 uniform vec2 offset;
 uniform uint hq_mode;
 uniform float time;
+uniform float gamma;
 
 
 float random (in vec2 st) {
@@ -299,12 +300,12 @@ vec3 mandelbrot( vec2 position )
 	
 	vec2 offset = vlerp(position, julia_c, julia);
 
-	float min_distance = 0;
+	float min_distance = 100000;
     for (; iter < max_iterations && r2 < escape; ++iter)
     {
         v = vlerp(cPow(v, exponent) + offset, cPow(vec2(abs(v.x), abs(v.y)), exponent) + offset, burning_ship);
         r2 = v.x * v.x + v.y * v.y;
-		vec2 st = v* .5 + .5;
+		vec2 st = v;
 		st *= 3.0;
 
 		    vec3 color = vec3(0.0);
@@ -317,26 +318,33 @@ vec3 mandelbrot( vec2 position )
 		r.x = fbm( st + 1.0*q + vec2(1.7,9.2)+ 0.15*time );
 		r.y = fbm( st + 1.0*q + vec2(8.3,2.8)+ 0.126*time);
 
-		float f = 1 - fbm(st+r);
+		float f = fbm(st+r);
 
-		min_distance = max(f, min_distance);
+		min_distance = min(f, min_distance);
     }
 	
-	min_distance = sqrt(min_distance);
+	min_distance = 1 -min_distance;
 
 	float smooth_iter = float(iter) - log(log(sqrt(r2)) / log(escape_radius)) / log(cAbs(exponent));
 	float lograt = log(smooth_iter)/log(float(max_iterations));
-    if (r2 < escape)
-        return vec3(1.0f, 1.0f, 1.0f);
-    else {
-		float hue = fract(mix(lograt, min_distance, .25) * hue.stretch + hue.shift);
-		return hsvToRGB(vec3(hue, 1 - lograt * min_distance,  min_distance * lograt));
+	float rat = smooth_iter/float(max_iterations);
+    if (r2 < escape) {
+        smooth_iter = max_iterations;
+		lograt = 1;
+		rat = 1;
 	}
+    
+	float hue = fract(mix(lograt, min_distance, .25) * hue.stretch + hue.shift);
+	return hsvToRGB(vec3(hue, 1 - min_distance * lograt,  rat * min_distance));
 }
 
 vec2 project_to_plane( vec2 coord ) {
 	vec2 proj = vec2( coord.x * (1.0/scale) * surface_ratio, coord.y * (1.0/scale) * -1) + center;
 	return proj;
+}
+
+vec3 do_gamma( vec3 col, float g ) {
+	return vec3( pow(col.x, g), pow(col.y, g), pow(col.z, g));
 }
 
 void main() {
@@ -353,7 +361,7 @@ void main() {
 					  mandelbrot( project_to_plane( coord + vec2(-x_off, -y_off) ) ) +
 					  mandelbrot( project_to_plane( coord + vec2(x_off, -y_off) ) );
 
-		color = vec4(result * .25, 1.0);
-     } else color = vec4( mandelbrot( project_to_plane( coord )), 1.0);
+		color = vec4(do_gamma(result * .25, 1.0/gamma), 1.0);
+     } else color = vec4( do_gamma(mandelbrot( project_to_plane( coord )), 1.0/gamma), 1.0);
 
 }
