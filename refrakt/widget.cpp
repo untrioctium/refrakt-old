@@ -1,6 +1,6 @@
 #include "imgui.h"
 #include "imgui-SFML.h"
-#include "sol.hpp"
+//#include "sol.hpp"
 #include "json.hpp"
 
 #include <iostream>

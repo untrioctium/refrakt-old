@@ -138,6 +138,7 @@ public:
 
 			{ "center", refrakt::vec2{-0.016f, 1.006f} },
 		{ "scale", refrakt::float_t{ 56.05f } },
+		{ "rotation", refrakt::float_t{ 0.0f } },
 		{ "hue", refrakt::struct_t{
 			{ "shift", refrakt::float_t{ 0.505300f } },
 		{ "stretch", refrakt::float_t{ 2.207f } }
@@ -151,7 +152,7 @@ public:
 		{ "hq_mode", refrakt::uint32_t{ 0 } },
 		{ "surface_ratio", refrakt::float_t{} },
 		{ "offset", refrakt::vec2{} },
-		{ "time", refrakt::float_t{} },
+		{ "time", refrakt::float_t{0.0} },
 		{ "gamma", refrakt::float_t{1.0} }
 		};
 	}
@@ -298,6 +299,8 @@ int main(int argc, char** argv)
 	w.initialize(fpSrc);
 
 	auto param = w.create_parameter_set();
+	auto j = nlohmann::json(param);
+	for (auto&& v : j["julia:ivec2"]) std::cout << v << std::endl;
 
 	bool showGui = true;
 
@@ -376,6 +379,7 @@ int main(int argc, char** argv)
 		ImGui::Begin("Parameters");
 		refrakt::type_helpers::imgui::display(param["center"], "center", refrakt::dvec2{ -5.0, 5.0 }, .001);
 		refrakt::type_helpers::imgui::display(param["scale"], "scale", refrakt::dvec2{ .5, 1000.0 }, .05);
+		refrakt::type_helpers::imgui::display(param["rotation"], "rotation", refrakt::dvec2{ -360, 360 }, .05);
 		refrakt::type_helpers::imgui::display(param.get<refrakt::struct_t>("hue").get("shift"), "hue_shift", refrakt::dvec2{ 0, 1 }, .0001);
 		refrakt::type_helpers::imgui::display(param.get<refrakt::struct_t>("hue").get("stretch"), "hue_stretch", refrakt::dvec2{ 0, 4 }, .001);
 		refrakt::type_helpers::imgui::display(param["exponent"], "exponent", refrakt::dvec2{ -4.0, 4.0 }, .001);
@@ -386,11 +390,12 @@ int main(int argc, char** argv)
 		refrakt::type_helpers::imgui::display(param["burning_ship"], "burning_ship", refrakt::dvec2{ 0, 1 }, 1);
 		refrakt::type_helpers::imgui::display(param["hq_mode"], "hq_mode", refrakt::dvec2{ 0, 1 }, 1);
 		refrakt::type_helpers::imgui::display(param["gamma"], "gamma", refrakt::dvec2{ 0, 3 }, .0001);
+		refrakt::type_helpers::imgui::display(param["time"], "time", refrakt::dvec2{ 0, 100000 }, 1);
 		ImGui::End();
 
 		param["surface_ratio"] = refrakt::float_t{ float(size.x) / float(size.y) };
 		param["offset"] = refrakt::vec2{ 1.0f / size.x, 1.0f / size.y };
-		param["time"] = refrakt::float_t{ time };
+
 		glViewport(0, 0, size.x, size.y);
 		w(param);
 
@@ -403,7 +408,7 @@ int main(int argc, char** argv)
 		}
 		else ImGui::EndFrame();
 		window.display();
-		time += timer.restart().asMilliseconds() / 1000.0;
+		param.get<refrakt::float_t>("time")[0] += timer.restart().asMilliseconds() / 1000.0f;
 	}
 
 	ImGui::SFML::Shutdown();

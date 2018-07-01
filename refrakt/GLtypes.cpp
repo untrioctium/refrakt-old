@@ -1,7 +1,9 @@
 #include "GLtypes.hpp"
 #include "type_helpers.hpp"
 #include <initializer_list>
-namespace refrakt {
+#include <iostream>
+
+namespace /*type_string*/ refrakt {
 #define MAKE_TYPE_STRING_FUNCTION(name) auto type_string( const name& value ) -> const std::string { return #name; }
 
 	auto type_string(const arg_t& arg) -> const std::string {
@@ -52,14 +54,14 @@ namespace refrakt {
 	MAKE_TYPE_STRING_FUNCTION(dmat4x4);
 }
 
-namespace refrakt {
+namespace /*struct_t*/ refrakt {
 
 	struct_t::struct_t(std::initializer_list<std::pair<std::string, refrakt::arg_t>> l) {
 		for (auto f : l) members_.insert(f);
 	}
 
 	void struct_t::add(const std::string& name, const std::string& type) {
-		this->members_.insert({ name, refrakt::type_helpers::factory(type) });
+		this->members_.insert({ name, refrakt::type_helpers::array_factory(type) });
 	}
 
 	auto struct_t::get(const std::string& name) -> refrakt::arg_t& {
@@ -77,6 +79,22 @@ namespace refrakt {
 	}
 
 	auto struct_t::type_string() const -> const std::string {
-		return "lol";
+		return "struct";
+	}
+
+}
+
+namespace /*to_json*/ refrakt {
+
+	void to_json(nlohmann::json& j, const refrakt::arg_t& a) {
+		std::visit([&](auto&& v) { j = v; }, a);
+	}
+
+	void to_json(nlohmann::json& j, const refrakt::struct_t& s) {
+		for (auto&& kv : s) j.emplace(kv.first + ":" + refrakt::type_string(kv.second), kv.second);
+	}
+
+	void from_json(const nlohmann::json& j, refrakt::struct_t& s) {
+		for (nlohmann::json::const_iterator it = j[0].cbegin(); it != j[0].cend(); ++it) std::cout << it.key() << std::endl;
 	}
 }

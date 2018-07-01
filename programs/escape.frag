@@ -21,6 +21,7 @@ uniform vec2 offset;
 uniform uint hq_mode;
 uniform float time;
 uniform float gamma;
+uniform float rotation;
 
 
 float random (in vec2 st) {
@@ -300,7 +301,9 @@ vec3 mandelbrot( vec2 position )
 	
 	vec2 offset = vlerp(position, julia_c, julia);
 
-	float min_distance = 100000;
+	float min_distance = 1000;
+	float trap_angle;
+	uint trapped_at = 0;
     for (; iter < max_iterations && r2 < escape; ++iter)
     {
         v = vlerp(cPow(v, exponent) + offset, cPow(vec2(abs(v.x), abs(v.y)), exponent) + offset, burning_ship);
@@ -320,10 +323,15 @@ vec3 mandelbrot( vec2 position )
 
 		float f = fbm(st+r);
 
+		if( f < min_distance ) {
+			min_distance = f;
+			trapped_at = iter;
+			trap_angle = atan(v.y, v.x)/(2 * PI) + .5;
+		}
 		min_distance = min(f, min_distance);
     }
 	
-	min_distance = 1 -min_distance;
+	min_distance = 1 - min_distance;
 
 	float smooth_iter = float(iter) - log(log(sqrt(r2)) / log(escape_radius)) / log(cAbs(exponent));
 	float lograt = log(smooth_iter)/log(float(max_iterations));
@@ -334,13 +342,16 @@ vec3 mandelbrot( vec2 position )
 		rat = 1;
 	}
     
-	float hue = fract(mix(lograt, min_distance, .25) * hue.stretch + hue.shift);
-	return hsvToRGB(vec3(hue, 1 - min_distance * lograt,  rat * min_distance));
+	float hue = fract(mix(rat, min_distance, lograt) * hue.stretch + hue.shift);
+	return hsvToRGB(vec3(hue, 1 - min_distance * lograt,  lograt * min_distance));
 }
 
 vec2 project_to_plane( vec2 coord ) {
-	vec2 proj = vec2( coord.x * (1.0/scale) * surface_ratio, coord.y * (1.0/scale) * -1) + center;
-	return proj;
+	float cang = cos(rotation / 360.0 * (2 * PI));
+	float sang = sin(rotation / 360.0 * (2 * PI));
+
+	vec2 proj = vec2( coord.x * (1.0/scale) * surface_ratio, coord.y * (1.0/scale));;
+	return vec2( proj.x * cang - proj.y * sang, proj.y * cang  + proj.x * sang) + center;
 }
 
 vec3 do_gamma( vec3 col, float g ) {

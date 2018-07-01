@@ -85,7 +85,9 @@ namespace refrakt {
 
 	class struct_t {
 	public:
+		struct_t() {};
 		struct_t(std::initializer_list<std::pair<std::string, refrakt::arg_t>> l);
+		struct_t(const struct_t&) = default;
 		void add(const std::string& name, const std::string& type);
 		auto get(const std::string& name) -> refrakt::arg_t&;
 		auto get(const std::string& name) const -> const refrakt::arg_t&;
@@ -93,27 +95,21 @@ namespace refrakt {
 		auto type_string() const -> const std::string;
 
 		template<typename T>
-		auto get(const std::string& name) const -> const T& {
-			return std::get<T>(get(name));
-		}
+		auto get(const std::string& name) const -> const T& { return std::get<T>(get(name)); }
 
 		template<typename T>
-		auto get(const std::string& name) -> T& {
-			return std::get<T>(get(name));
-		}
+		auto get(const std::string& name) -> T& { return std::get<T>(get(name)); }
 
-		auto begin() const {
-			return members_.begin();
-		}
-
-		auto end() const {
-			return members_.end();
-		}
-		
+		auto begin() const { return members_.begin(); }
+		auto end() const { return members_.end(); }
 		auto operator[](const std::string& key) -> refrakt::arg_t& { return members_[key]; }
 
 	private:
 		std::map<std::string, refrakt::arg_t> members_{};
 	};
+
+	void to_json(nlohmann::json& j, const refrakt::struct_t& s);
+	void to_json(nlohmann::json& j, const refrakt::arg_t& a);
+	void from_json(const nlohmann::json& j, refrakt::struct_t& s);
 
 }
