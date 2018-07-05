@@ -81,6 +81,6 @@ namespace refrakt::type_helpers::imgui {
 }
 
 namespace refrakt::type_helpers {
-	auto array_factory(const std::string& name) -> refrakt::arg_t;
+	auto factory(const std::string& name) -> refrakt::arg_t;
 	inline bool are_same_type(const refrakt::arg_t& a, const refrakt::arg_t& b) { return a.index() == b.index(); }
 }

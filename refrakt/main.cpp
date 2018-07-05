@@ -153,7 +153,11 @@ public:
 		{ "surface_ratio", refrakt::float_t{} },
 		{ "offset", refrakt::vec2{} },
 		{ "time", refrakt::float_t{0.0} },
-		{ "gamma", refrakt::float_t{1.0} }
+		{ "gamma", refrakt::float_t{1.0} },
+		{ "sat_mod", refrakt::float_t{ 1.0 } },
+		{ "hue_mod", refrakt::float_t{ 1.0 } },
+		{ "val_mod", refrakt::float_t{ 1.0 } },
+		{ "cloud_octaves", refrakt::uint32_t{ 6 } }
 		};
 	}
 
@@ -377,6 +381,18 @@ int main(int argc, char** argv)
 		}
 
 		ImGui::Begin("Parameters");
+		if (ImGui::Button("Copy Parameters")) {
+			ImGui::SetClipboardText(nlohmann::json(param).dump().c_str());
+		}
+
+		ImGui::SameLine();
+
+		if (ImGui::Button("Paste Parameters")) {
+			refrakt::struct_t loaded = nlohmann::json::parse(ImGui::GetClipboardText());
+			for (auto& [name, value] : loaded) {
+				if (param.has(name)) param[name] = value;
+			}
+		}
 		refrakt::type_helpers::imgui::display(param["center"], "center", refrakt::dvec2{ -5.0, 5.0 }, .001);
 		refrakt::type_helpers::imgui::display(param["scale"], "scale", refrakt::dvec2{ .5, 1000.0 }, .05);
 		refrakt::type_helpers::imgui::display(param["rotation"], "rotation", refrakt::dvec2{ -360, 360 }, .05);
@@ -390,6 +406,10 @@ int main(int argc, char** argv)
 		refrakt::type_helpers::imgui::display(param["burning_ship"], "burning_ship", refrakt::dvec2{ 0, 1 }, 1);
 		refrakt::type_helpers::imgui::display(param["hq_mode"], "hq_mode", refrakt::dvec2{ 0, 1 }, 1);
 		refrakt::type_helpers::imgui::display(param["gamma"], "gamma", refrakt::dvec2{ 0, 3 }, .0001);
+		refrakt::type_helpers::imgui::display(param["sat_mod"], "sat_mod", refrakt::dvec2{ 0, 1 }, .001);
+		refrakt::type_helpers::imgui::display(param["val_mod"], "val_mod", refrakt::dvec2{ 0, 1 }, .001);
+		refrakt::type_helpers::imgui::display(param["hue_mod"], "hue_mod", refrakt::dvec2{ 0, 1 }, .001);
+		refrakt::type_helpers::imgui::display(param["cloud_octaves"], "cloud_octaves", refrakt::dvec2{ 0, 24 }, 1);
 		refrakt::type_helpers::imgui::display(param["time"], "time", refrakt::dvec2{ 0, 100000 }, 1);
 		ImGui::End();
 
@@ -415,3 +435,4 @@ int main(int argc, char** argv)
 
 	return 0;
 }
+

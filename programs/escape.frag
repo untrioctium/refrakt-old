@@ -23,6 +23,12 @@ uniform float time;
 uniform float gamma;
 uniform float rotation;
 
+uniform float hue_mod;
+uniform float sat_mod;
+uniform float val_mod;
+
+uniform uint cloud_octaves;
+
 
 float random (in vec2 st) {
     return fract(sin(dot(st.xy,
@@ -57,7 +63,7 @@ float fbm (in vec2 st) {
     float frequency = 0.;
     //
     // Loop of octaves
-    for (int i = 0; i < OCTAVES; i++) {
+    for (int i = 0; i < cloud_octaves; i++) {
         value += amplitude * abs(noise(st));
         st *= 2.;
         amplitude *= .5;
@@ -290,6 +296,10 @@ vec3 hsvToRGB( vec3 hsv )
 	return vec3(0,0,0);
 }
 
+float sign_lerp( float x, float y ) {
+	return y - x * (2 * y - 1.0);
+}
+
 vec3 mandelbrot( vec2 position )
 {
 	vec2 v = position;
@@ -343,7 +353,7 @@ vec3 mandelbrot( vec2 position )
 	}
     
 	float hue = fract(mix(rat, min_distance, lograt) * hue.stretch + hue.shift);
-	return hsvToRGB(vec3(hue, 1 - min_distance * lograt,  lograt * min_distance));
+	return hsvToRGB(vec3(sign_lerp(hue, hue_mod), sign_lerp(min_distance * lograt, sat_mod),  sign_lerp(lograt * min_distance, val_mod)));
 }
 
 vec2 project_to_plane( vec2 coord ) {

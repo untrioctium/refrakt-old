@@ -60,8 +60,8 @@ namespace /*struct_t*/ refrakt {
 		for (auto f : l) members_.insert(f);
 	}
 
-	void struct_t::add(const std::string& name, const std::string& type) {
-		this->members_.insert({ name, refrakt::type_helpers::array_factory(type) });
+	auto struct_t::add(const std::string& name, const std::string& type) -> refrakt::arg_t& {
+		return this->members_.insert({ name, refrakt::type_helpers::factory(type) }).first->second;
 	}
 
 	auto struct_t::get(const std::string& name) -> refrakt::arg_t& {
@@ -84,7 +84,7 @@ namespace /*struct_t*/ refrakt {
 
 }
 
-namespace /*to_json*/ refrakt {
+namespace /*json*/ refrakt {
 
 	void to_json(nlohmann::json& j, const refrakt::arg_t& a) {
 		std::visit([&](auto&& v) { j = v; }, a);
@@ -95,6 +95,22 @@ namespace /*to_json*/ refrakt {
 	}
 
 	void from_json(const nlohmann::json& j, refrakt::struct_t& s) {
-		for (nlohmann::json::const_iterator it = j[0].cbegin(); it != j[0].cend(); ++it) std::cout << it.key() << std::endl;
+		for (nlohmann::json::const_iterator it = j.cbegin(); it != j.cend(); ++it) {
+			std::size_t colon_location = it.key().find(":");
+			std::string name = it.key().substr(0, colon_location);
+			std::string type = it.key().substr(colon_location + 1);
+
+			std::visit([&](auto&& arg) {
+				using arg_type = std::decay_t<decltype(arg)>;
+
+				if constexpr(refrakt::is_static_array<arg_type>::value) {
+					for (std::size_t i = 0; i < std::min(arg.size(), it.value().size()); i++)
+						arg[i] = it.value()[i].get<arg_type::value_type>();
+				}
+				else if constexpr(std::is_same_v<arg_type, refrakt::struct_t>) {
+					from_json(it.value(), arg);
+				}
+			}, s.add(name, type));
+		}
 	}
 }

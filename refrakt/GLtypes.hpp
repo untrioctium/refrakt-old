@@ -88,7 +88,7 @@ namespace refrakt {
 		struct_t() {};
 		struct_t(std::initializer_list<std::pair<std::string, refrakt::arg_t>> l);
 		struct_t(const struct_t&) = default;
-		void add(const std::string& name, const std::string& type);
+		auto add(const std::string& name, const std::string& type) -> refrakt::arg_t&;
 		auto get(const std::string& name) -> refrakt::arg_t&;
 		auto get(const std::string& name) const -> const refrakt::arg_t&;
 		auto list() const ->std::vector<std::string>;
@@ -102,6 +102,9 @@ namespace refrakt {
 
 		auto begin() const { return members_.begin(); }
 		auto end() const { return members_.end(); }
+
+		bool has(const std::string& name) { return members_.count(name) > 0; }
+
 		auto operator[](const std::string& key) -> refrakt::arg_t& { return members_[key]; }
 
 	private:

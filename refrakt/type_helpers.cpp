@@ -56,7 +56,7 @@ bool refrakt::type_helpers::imgui::display(refrakt::arg_t& value, const std::str
 		return display(v, description, bounds, speed); }, value);
 }
 
-refrakt::arg_t refrakt::type_helpers::array_factory(const std::string& name) {
+refrakt::arg_t refrakt::type_helpers::factory(const std::string& name) {
 #define MAKE_TYPE_FACTORY(name) {#name, refrakt::name{}}
 
 	static std::map<std::string, refrakt::arg_t> types {
@@ -64,6 +64,7 @@ refrakt::arg_t refrakt::type_helpers::array_factory(const std::string& name) {
 		{ "double", refrakt::double_t{} },
 		{ "int32", refrakt::int32_t{} },
 		{ "uint32", refrakt::uint32_t{} },
+		{ "struct", refrakt::struct_t{} },
 		MAKE_TYPE_FACTORY(vec2),
 		MAKE_TYPE_FACTORY(dvec2),
 		MAKE_TYPE_FACTORY(ivec2),
