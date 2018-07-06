@@ -96,18 +96,19 @@ namespace /*json*/ refrakt {
 
 	void from_json(const nlohmann::json& j, refrakt::struct_t& s) {
 		for (nlohmann::json::const_iterator it = j.cbegin(); it != j.cend(); ++it) {
-			std::size_t colon_location = it.key().find(":");
+			const std::size_t colon_location = it.key().find(":");
 			std::string name = it.key().substr(0, colon_location);
 			std::string type = it.key().substr(colon_location + 1);
 
 			std::visit([&](auto&& arg) {
 				using arg_type = std::decay_t<decltype(arg)>;
 
-				if constexpr(refrakt::is_static_array<arg_type>::value) {
-					for (std::size_t i = 0; i < std::min(arg.size(), it.value().size()); i++)
+				if constexpr(refrakt::is_static_array_v<arg_type>) {
+					const std::size_t size = std::min(arg.size(), it.value().size());
+					for (std::size_t i = 0; i < size; i++)
 						arg[i] = it.value()[i].get<arg_type::value_type>();
 				}
-				else if constexpr(std::is_same_v<arg_type, refrakt::struct_t>) {
+				else if constexpr (std::is_same_v<arg_type, refrakt::struct_t>) {
 					from_json(it.value(), arg);
 				}
 			}, s.add(name, type));

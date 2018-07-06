@@ -16,6 +16,9 @@ namespace refrakt {
 		static constexpr bool value = decltype(is_static_array::test(T()))::value;
 	};
 
+	template<typename T>
+	constexpr bool is_static_array_v = is_static_array<T>::value;
+
 	template<typename T> 
 	auto type_string(const T& v) -> const std::string { static_assert(std::false_type, "Unknown type"); }
 

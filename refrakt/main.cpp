@@ -318,6 +318,9 @@ int main(int argc, char** argv)
 	lang.mIdentifiers.insert({ "vec2", id });
 	editor.SetLanguageDefinition(lang);
 
+	auto add = [](auto a, auto b) { return a + b; };
+	std::cout << add(3.0, 2) << std::endl;
+
 	editor.SetText(fpSrc);
 
 	std::cout << sizeof(refrakt::struct_t) << std::endl;
