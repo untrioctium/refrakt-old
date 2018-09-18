@@ -88,15 +88,15 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(PROJECTDIR)lib\glew-2.1.0\include;$(PROJECTDIR)extern;$(PROJECTDIR)lib\lua\include;$(PROJECTDIR)lib\SFML-2.4.2\include</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>GLEW_STATIC;__WINDOWS_MM__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(SolutionDir)dependencies\lib\glew-2.1.0\include;$(SolutionDir)dependencies\include;$(SolutionDir)dependencies\lib\lua\include;$(SolutionDir)dependencies\lib\SFML-2.4.2\include;C:\Program Files\boost\boost_1_68_0</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>GLEW_STATIC;__WINDOWS_MM__;_SILENCE_CXX17_ALLOCATOR_VOID_DEPRECATION_WARNING;_SCL_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <EnablePREfast>false</EnablePREfast>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>$(PROJECTDIR)lib\glew-2.1.0\lib\;$(PROJECTDIR)lib\SFML-2.4.2\lib;$(PROJECTDIR)lib\rtmidi;$(PROJECTDIR)lib\lua;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)dependencies\lib\glew-2.1.0\lib\;$(SolutionDir)dependencies\lib\SFML-2.4.2\lib;$(SolutionDir)dependencies\lib\rtmidi;$(SolutionDir)dependencies\lib\lua;C:\Program Files\boost\boost_1_68_0\stage\lib\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>opengl32.lib;glu32.lib;glew32s.lib;sfml-graphics-d.lib;sfml-window-d.lib;sfml-system-d.lib;lua53.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
@@ -129,31 +129,32 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="extern\base64.cpp" />
-    <ClCompile Include="extern\imgui-SFML.cpp" />
-    <ClCompile Include="extern\imgui.cpp" />
-    <ClCompile Include="extern\imgui_demo.cpp" />
-    <ClCompile Include="extern\imgui_draw.cpp" />
-    <ClCompile Include="extern\RtMidi.cpp" />
-    <ClCompile Include="extern\TextEditor.cpp" />
+    <ClCompile Include="..\dependencies\include\base64.cpp" />
+    <ClCompile Include="..\dependencies\include\imgui-SFML.cpp" />
+    <ClCompile Include="..\dependencies\include\imgui.cpp" />
+    <ClCompile Include="..\dependencies\include\imgui_demo.cpp" />
+    <ClCompile Include="..\dependencies\include\imgui_draw.cpp" />
+    <ClCompile Include="..\dependencies\include\RtMidi.cpp" />
+    <ClCompile Include="..\dependencies\include\TextEditor.cpp" />
     <ClCompile Include="GLtypes.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="type_helpers.cpp" />
     <ClCompile Include="widget.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="extern\base64.h" />
-    <ClInclude Include="extern\imconfig-SFML.h" />
-    <ClInclude Include="extern\imconfig.h" />
-    <ClInclude Include="extern\imgui-SFML.h" />
-    <ClInclude Include="extern\imgui.h" />
-    <ClInclude Include="extern\imgui_internal.h" />
-    <ClInclude Include="extern\json.hpp" />
-    <ClInclude Include="extern\RtMidi.h" />
-    <ClInclude Include="extern\stb_rect_pack.h" />
-    <ClInclude Include="extern\stb_textedit.h" />
-    <ClInclude Include="extern\stb_truetype.h" />
-    <ClInclude Include="extern\TextEditor.h" />
+    <ClInclude Include="..\dependencies\include\base64.h" />
+    <ClInclude Include="..\dependencies\include\crow_all.h" />
+    <ClInclude Include="..\dependencies\include\imconfig-SFML.h" />
+    <ClInclude Include="..\dependencies\include\imconfig.h" />
+    <ClInclude Include="..\dependencies\include\imgui-SFML.h" />
+    <ClInclude Include="..\dependencies\include\imgui.h" />
+    <ClInclude Include="..\dependencies\include\imgui_internal.h" />
+    <ClInclude Include="..\dependencies\include\json.hpp" />
+    <ClInclude Include="..\dependencies\include\RtMidi.h" />
+    <ClInclude Include="..\dependencies\include\stb_rect_pack.h" />
+    <ClInclude Include="..\dependencies\include\stb_textedit.h" />
+    <ClInclude Include="..\dependencies\include\stb_truetype.h" />
+    <ClInclude Include="..\dependencies\include\TextEditor.h" />
     <ClInclude Include="GLtypes.hpp" />
     <ClInclude Include="type_helpers.hpp" />
     <ClInclude Include="widget.hpp" />

@@ -13,43 +13,22 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="Header Files\extern">
-      <UniqueIdentifier>{3d2079ce-67ea-411d-8cc1-e1eec74a78ff}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\extern">
-      <UniqueIdentifier>{f26f4e8b-06f5-45b2-86d6-288b426a0f53}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\extern\ImGui">
-      <UniqueIdentifier>{926bc75d-21a7-49f7-8e4c-0d87286e5b09}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Scripts">
       <UniqueIdentifier>{79c06a83-1354-4d31-975a-c2d10b8783c9}</UniqueIdentifier>
     </Filter>
     <Filter Include="Scripts\Escape">
       <UniqueIdentifier>{4994e9f2-3cbb-4c8d-9b96-dc584d02db95}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Dependencies">
+      <UniqueIdentifier>{3d2079ce-67ea-411d-8cc1-e1eec74a78ff}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Dependencies">
+      <UniqueIdentifier>{d704a6e2-22b4-474b-9616-ed8b548552d1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="extern\imgui.cpp">
-      <Filter>Source Files\extern\ImGui</Filter>
-    </ClCompile>
-    <ClCompile Include="extern\imgui_demo.cpp">
-      <Filter>Source Files\extern\ImGui</Filter>
-    </ClCompile>
-    <ClCompile Include="extern\imgui_draw.cpp">
-      <Filter>Source Files\extern\ImGui</Filter>
-    </ClCompile>
-    <ClCompile Include="extern\imgui-SFML.cpp">
-      <Filter>Source Files\extern\ImGui</Filter>
-    </ClCompile>
-    <ClCompile Include="extern\RtMidi.cpp">
-      <Filter>Source Files\extern</Filter>
-    </ClCompile>
-    <ClCompile Include="extern\base64.cpp">
-      <Filter>Source Files\extern</Filter>
     </ClCompile>
     <ClCompile Include="GLtypes.cpp">
       <Filter>Source Files</Filter>
@@ -60,46 +39,31 @@
     <ClCompile Include="type_helpers.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="extern\TextEditor.cpp">
-      <Filter>Source Files\extern\ImGui</Filter>
+    <ClCompile Include="..\dependencies\include\base64.cpp">
+      <Filter>Source Files\Dependencies</Filter>
+    </ClCompile>
+    <ClCompile Include="..\dependencies\include\imgui.cpp">
+      <Filter>Source Files\Dependencies</Filter>
+    </ClCompile>
+    <ClCompile Include="..\dependencies\include\imgui_demo.cpp">
+      <Filter>Source Files\Dependencies</Filter>
+    </ClCompile>
+    <ClCompile Include="..\dependencies\include\imgui_draw.cpp">
+      <Filter>Source Files\Dependencies</Filter>
+    </ClCompile>
+    <ClCompile Include="..\dependencies\include\imgui-SFML.cpp">
+      <Filter>Source Files\Dependencies</Filter>
+    </ClCompile>
+    <ClCompile Include="..\dependencies\include\RtMidi.cpp">
+      <Filter>Source Files\Dependencies</Filter>
+    </ClCompile>
+    <ClCompile Include="..\dependencies\include\TextEditor.cpp">
+      <Filter>Source Files\Dependencies</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="extern\imconfig.h">
-      <Filter>Header Files\extern</Filter>
-    </ClInclude>
-    <ClInclude Include="extern\imconfig-SFML.h">
-      <Filter>Header Files\extern</Filter>
-    </ClInclude>
-    <ClInclude Include="extern\imgui.h">
-      <Filter>Header Files\extern</Filter>
-    </ClInclude>
-    <ClInclude Include="extern\imgui_internal.h">
-      <Filter>Header Files\extern</Filter>
-    </ClInclude>
-    <ClInclude Include="extern\imgui-SFML.h">
-      <Filter>Header Files\extern</Filter>
-    </ClInclude>
-    <ClInclude Include="extern\json.hpp">
-      <Filter>Header Files\extern</Filter>
-    </ClInclude>
-    <ClInclude Include="extern\stb_rect_pack.h">
-      <Filter>Header Files\extern</Filter>
-    </ClInclude>
-    <ClInclude Include="extern\stb_textedit.h">
-      <Filter>Header Files\extern</Filter>
-    </ClInclude>
-    <ClInclude Include="extern\stb_truetype.h">
-      <Filter>Header Files\extern</Filter>
-    </ClInclude>
     <ClInclude Include="GLtypes.hpp">
       <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="extern\RtMidi.h">
-      <Filter>Header Files\extern</Filter>
-    </ClInclude>
-    <ClInclude Include="extern\base64.h">
-      <Filter>Header Files\extern</Filter>
     </ClInclude>
     <ClInclude Include="widget.hpp">
       <Filter>Header Files</Filter>
@@ -107,8 +71,44 @@
     <ClInclude Include="type_helpers.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="extern\TextEditor.h">
-      <Filter>Header Files\extern</Filter>
+    <ClInclude Include="..\dependencies\include\base64.h">
+      <Filter>Header Files\Dependencies</Filter>
+    </ClInclude>
+    <ClInclude Include="..\dependencies\include\crow_all.h">
+      <Filter>Header Files\Dependencies</Filter>
+    </ClInclude>
+    <ClInclude Include="..\dependencies\include\imconfig.h">
+      <Filter>Header Files\Dependencies</Filter>
+    </ClInclude>
+    <ClInclude Include="..\dependencies\include\imconfig-SFML.h">
+      <Filter>Header Files\Dependencies</Filter>
+    </ClInclude>
+    <ClInclude Include="..\dependencies\include\imgui.h">
+      <Filter>Header Files\Dependencies</Filter>
+    </ClInclude>
+    <ClInclude Include="..\dependencies\include\imgui_internal.h">
+      <Filter>Header Files\Dependencies</Filter>
+    </ClInclude>
+    <ClInclude Include="..\dependencies\include\imgui-SFML.h">
+      <Filter>Header Files\Dependencies</Filter>
+    </ClInclude>
+    <ClInclude Include="..\dependencies\include\json.hpp">
+      <Filter>Header Files\Dependencies</Filter>
+    </ClInclude>
+    <ClInclude Include="..\dependencies\include\RtMidi.h">
+      <Filter>Header Files\Dependencies</Filter>
+    </ClInclude>
+    <ClInclude Include="..\dependencies\include\stb_rect_pack.h">
+      <Filter>Header Files\Dependencies</Filter>
+    </ClInclude>
+    <ClInclude Include="..\dependencies\include\stb_textedit.h">
+      <Filter>Header Files\Dependencies</Filter>
+    </ClInclude>
+    <ClInclude Include="..\dependencies\include\stb_truetype.h">
+      <Filter>Header Files\Dependencies</Filter>
+    </ClInclude>
+    <ClInclude Include="..\dependencies\include\TextEditor.h">
+      <Filter>Header Files\Dependencies</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

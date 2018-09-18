@@ -10,6 +10,10 @@
 #include <string>
 #include <fstream>
 
+#pragma warning(push, 0)
+#include "crow_all.h"
+#pragma warning(pop)
+
 #include "GLtypes.hpp"
 #include "type_helpers.hpp"
 #include "TextEditor.h"
@@ -303,8 +307,6 @@ int main(int argc, char** argv)
 	w.initialize(fpSrc);
 
 	auto param = w.create_parameter_set();
-	auto j = nlohmann::json(param);
-	for (auto&& v : j["julia:ivec2"]) std::cout << v << std::endl;
 
 	bool showGui = true;
 
@@ -318,14 +320,22 @@ int main(int argc, char** argv)
 	lang.mIdentifiers.insert({ "vec2", id });
 	editor.SetLanguageDefinition(lang);
 
-	auto add = [](auto a, auto b) { return a + b; };
-	std::cout << add(3.0, 2) << std::endl;
 
 	editor.SetText(fpSrc);
 
-	std::cout << sizeof(refrakt::struct_t) << std::endl;
-	std::cout << sizeof(refrakt::arg_t) << std::endl;
 	float time = 0;
+
+	//auto server = std::thread([&]() {
+		crow::SimpleApp app;
+
+		CROW_ROUTE(app, "/")
+			([&]() {
+			return nlohmann::json(param).dump();
+		});
+
+		app.port(18080).run(); 
+	//});
+
 	while (window.isOpen()) {
 
 		sf::Event event;
@@ -336,6 +346,7 @@ int main(int argc, char** argv)
 			if (event.type == sf::Event::Closed ||
 				(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Key::Escape)) {
 				window.close();
+				app.stop();
 				return 0;
 			}
 
@@ -433,9 +444,8 @@ int main(int argc, char** argv)
 		window.display();
 		param.get<refrakt::float_t>("time")[0] += timer.restart().asMilliseconds() / 1000.0f;
 	}
-
+	app.stop();
 	ImGui::SFML::Shutdown();
-
 	return 0;
 }
 

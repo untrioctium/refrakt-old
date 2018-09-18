@@ -52,8 +52,10 @@ namespace refrakt::type_helpers::opengl {
 }
 
 bool refrakt::type_helpers::imgui::display(refrakt::arg_t& value, const std::string& description, refrakt::dvec2 bounds, const float speed) {
-	return std::visit([&](auto&& v) {
-		return display(v, description, bounds, speed); }, value);
+	return std::visit(
+		[&] (auto&& v) { return display(v, description, bounds, speed); }, 
+		value
+	);
 }
 
 refrakt::arg_t refrakt::type_helpers::factory(const std::string& name) {

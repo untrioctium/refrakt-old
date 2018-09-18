@@ -70,8 +70,8 @@ namespace refrakt::type_helpers::imgui {
 	bool display(refrakt::static_array_t<T, s>& value, const std::string& description, refrakt::dvec2 bounds, const float speed) {
 		if constexpr(!std::is_arithmetic_v<T>) return false; // TODO: Properly deal with matrices (arrays of vecns)
 		else {
-			T min_val = static_cast<T>(bounds[0]);
-			T max_val = static_cast<T>(bounds[1]);
+			const T min_val = static_cast<T>(bounds[0]);
+			const T max_val = static_cast<T>(bounds[1]);
 
 			return ImGui::DragScalarN(description.c_str(), scalar_flag<T>(), value.data(), s, speed, &min_val, &max_val);
 		}
