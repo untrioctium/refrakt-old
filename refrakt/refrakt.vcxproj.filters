@@ -25,6 +25,9 @@
     <Filter Include="Source Files\Dependencies">
       <UniqueIdentifier>{d704a6e2-22b4-474b-9616-ed8b548552d1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Widgets">
+      <UniqueIdentifier>{10472eba-7ddc-4f6d-9820-90a5b9ce2ac3}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -59,6 +62,15 @@
     </ClCompile>
     <ClCompile Include="..\dependencies\include\TextEditor.cpp">
       <Filter>Source Files\Dependencies</Filter>
+    </ClCompile>
+    <ClCompile Include="Widgets\compute_widget.cpp">
+      <Filter>Source Files\Widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="app.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="texture.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -110,6 +122,12 @@
     <ClInclude Include="..\dependencies\include\TextEditor.h">
       <Filter>Header Files\Dependencies</Filter>
     </ClInclude>
+    <ClInclude Include="global_events.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="texture.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\programs\escape.lua">
@@ -120,6 +138,12 @@
     </None>
     <None Include="..\settings.json">
       <Filter>Resource Files</Filter>
+    </None>
+    <None Include="factory.hpp">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="..\programs\escape.json">
+      <Filter>Scripts\Escape</Filter>
     </None>
   </ItemGroup>
 </Project>

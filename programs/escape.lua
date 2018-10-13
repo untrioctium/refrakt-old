@@ -4,6 +4,16 @@ return {
 		author = "Alex Riley"
 	},
 	
+	input = {},
+	output = {
+		{
+			name = "surface",
+			type = "texture",
+			size = "arbitrary",
+			format = "RGBA8UI"
+		},
+	},
+
 	parameters = {
 		{
 			name = "center",

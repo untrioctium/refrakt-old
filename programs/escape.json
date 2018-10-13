@@ -1,0 +1,31 @@
+{
+  "meta": {
+    "name": "Escape",
+    "author": "Alex Riley"
+  },
+
+  "parameters": [
+    {
+      "name": "center",
+      "type": "vec2",
+      "desc": "camera center",
+      "ttip": "center point of the viewing window",
+      "bounds": [ -5, 5 ],
+      "speed": 0.25,
+      "init": [ 0, 0 ]
+    }
+  ],
+
+  "output": [
+    {
+      "name": "surface",
+      "type": "texture",
+      "format": "rgba8ui"
+    }
+  ],
+
+  "widget": {
+    "loader": "ComputeWidget",
+    "source": "escape.cs"
+  }
+}

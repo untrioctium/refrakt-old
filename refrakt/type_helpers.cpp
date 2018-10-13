@@ -66,7 +66,6 @@ refrakt::arg_t refrakt::type_helpers::factory(const std::string& name) {
 		{ "double", refrakt::double_t{} },
 		{ "int32", refrakt::int32_t{} },
 		{ "uint32", refrakt::uint32_t{} },
-		{ "struct", refrakt::struct_t{} },
 		MAKE_TYPE_FACTORY(vec2),
 		MAKE_TYPE_FACTORY(dvec2),
 		MAKE_TYPE_FACTORY(ivec2),

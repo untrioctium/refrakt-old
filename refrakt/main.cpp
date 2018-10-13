@@ -9,26 +9,18 @@
 #include <iostream>
 #include <string>
 #include <fstream>
-
+/*
 #pragma warning(push, 0)
 #include "crow_all.h"
 #pragma warning(pop)
-
+*/
 #include "GLtypes.hpp"
 #include "type_helpers.hpp"
 #include "TextEditor.h"
 #include "widget.hpp"
+#include <typeinfo>
 
 using json = nlohmann::json;
-
-void checkErrors(std::string desc) {
-	GLenum e = glGetError();
-	if (e != GL_NO_ERROR) {
-		fprintf(stderr, "OpenGL error in \"%s\": %s (%d)\n", desc.c_str(), gluErrorString(e), e);
-		std::cin.get();
-		exit(20);
-	}
-}
 
 void show_main_menu() {
 	if (ImGui::BeginMainMenuBar()) {
@@ -44,10 +36,13 @@ void show_main_menu() {
 }
 
 
-class EscapeWidget : public refrakt::widget {
-public:
-	void initialize(const std::string& source) {
-		GLuint handle = glCreateProgram();
+//class EscapeWidget : public refrakt::widget::Registrar<EscapeWidget> {
+//public:
+
+//	EscapeWidget() {}
+
+//	void initialize(const std::string& source) {
+		/*GLuint handle = glCreateProgram();
 		GLuint vp = glCreateShader(GL_VERTEX_SHADER);
 		GLuint fp = glCreateShader(GL_FRAGMENT_SHADER);
 
@@ -118,34 +113,17 @@ public:
 		glBindVertexArray(0);
 
 		render_prog_ = handle;
-	}
+	}*/
 
-	auto create_parameter_set() -> refrakt::widget::parameter_set {
-		return refrakt::widget::parameter_set
+	/*auto create_parameter_set() -> refrakt::widget::parameter_set_t {
+		return refrakt::widget::parameter_set_t
 		{
-			/*{"center", refrakt::vec2{}},
-			{"scale", refrakt::float_t{.75} },
-			{"hue", refrakt::struct_t{
-				{"shift", refrakt::float_t{ 0.200f }},
-				{"stretch", refrakt::float_t{1.0} }
-			}},
-			{"exponent", refrakt::vec2{ 1.9029998779296875, 0.8349999785423279 } },
-			{ "escape_radius", refrakt::float_t{40000.0} },
-			{ "max_iterations", refrakt::uint32_t{300} },
-			{ "julia", refrakt::vec2{1.0, 1.0} },
-			{ "julia_c", refrakt::vec2{ 0.29200002551078796, -0.04599998891353607 } },
-			{ "burning_ship", refrakt::vec2{1.0, 1.0} },
-			{ "hq_mode", refrakt::uint32_t{0} },
-			{ "surface_ratio", refrakt::float_t{} },
-			{ "offset", refrakt::vec2{} },
-			{ "time", refrakt::float_t{} }*/
-
 			{ "center", refrakt::vec2{-0.016f, 1.006f} },
 		{ "scale", refrakt::float_t{ 56.05f } },
 		{ "rotation", refrakt::float_t{ 0.0f } },
 		{ "hue", refrakt::struct_t{
 			{ "shift", refrakt::float_t{ 0.505300f } },
-		{ "stretch", refrakt::float_t{ 2.207f } }
+			{ "stretch", refrakt::float_t{ 2.207f } }
 		} },
 		{ "exponent", refrakt::vec2{ 2, 0 } },
 		{ "escape_radius", refrakt::float_t{ 16 } },
@@ -163,9 +141,9 @@ public:
 		{ "val_mod", refrakt::float_t{ 1.0 } },
 		{ "cloud_octaves", refrakt::uint32_t{ 6 } }
 		};
-	}
+	}*/
 
-	auto operator()(const refrakt::widget::parameter_set& p) -> refrakt::widget::parameter_set {
+	/*auto operator()(const refrakt::widget::parameter_set_t& p) -> refrakt::widget::parameter_set_t {
 
 		glUseProgram(render_prog_);
 		checkErrors("use program");
@@ -187,10 +165,10 @@ public:
 		return {};
 	}
 
-	bool validate(const refrakt::widget::parameter_set &) { return true; }
+	bool validate(const refrakt::widget::parameter_set_t &) { return true; }
 
-	auto parameter_info(const std::string& name) -> refrakt::widget::parameter_meta {
-		static std::map<std::string, refrakt::widget::parameter_meta> meta{
+	auto parameter_info(const std::string& name) -> refrakt::widget::parameter_meta_t {
+		static std::map<std::string, refrakt::widget::parameter_meta_t> meta{
 			{"center", { 
 				"Camera center", 
 				"Center point of the viewing window", 
@@ -207,63 +185,24 @@ private:
 	GLuint render_prog_;
 	GLuint vert_array_;
 	GLuint pos_buf_;
-};
+};*/
 
-void imgui_experiment_window() {
-	ImGui::Begin("Testing");
-	ImGui::Text("Just a test");
-	
-	static const std::size_t total_samples = 100;
-	static sf::Clock clock;
-	static std::vector<float> frame_times(total_samples);;
+//int main2(int argc, char** argv)
+//{
+	//std::vector<std::string> arg;
+	//for (int i = 0; i < argc; i++) arg.push_back(argv[i]);
 
-	frame_times.push_back(static_cast<float>(clock.restart().asMicroseconds())/1000.0);
-	frame_times.erase(frame_times.begin());
+	//refrakt::app app;
+	//app.init(arg);
+	//return app.run();
 
-	ImGui::PlotLines("Frame times", frame_times.data(), frame_times.size(), 0, 0, 0, 100);
-	
-	static float s;
-	ImGui::SliderFloat("##slide", &s, 0, 1);
-	if (ImGui::BeginPopupContextItem()) {
-		ImGui::TextDisabled("Options");
-		ImGui::Separator();
-		if (ImGui::Selectable("Modify twiddle")) ImGui::OpenPopup("Delete?");
-		if (ImGui::BeginPopupModal("Delete?", NULL, ImGuiWindowFlags_AlwaysAutoResize))
-		{
-			ImGui::Text("All those beautiful files will be deleted.\nThis operation cannot be undone!\n\n");
-			ImGui::Separator();
+	/*json escape;
+	std::ifstream("programs/escape.json") >> escape;
 
-			//static int dummy_i = 0;
-			//ImGui::Combo("Combo", &dummy_i, "Delete\0Delete harder\0");
-
-			static bool dont_ask_me_next_time = false;
-			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
-			ImGui::Checkbox("Don't ask me next time", &dont_ask_me_next_time);
-			ImGui::PopStyleVar();
-
-			if (ImGui::Button("OK", ImVec2(120, 0))) { ImGui::CloseCurrentPopup(); }
-			ImGui::SetItemDefaultFocus();
-			ImGui::SameLine();
-			if (ImGui::Button("Cancel", ImVec2(120, 0))) { ImGui::CloseCurrentPopup(); }
-			ImGui::EndPopup();
-		}
-
-
-		if (ImGui::IsItemHovered())
-			ImGui::SetTooltip("I am a tooltip");
-
-		ImGui::Separator();
-		if (ImGui::Selectable("Set bounds")) std::cout << "lel" << std::endl;
-		ImGui::EndPopup();
-	}
-	ImGui::SameLine();
-	ImGui::Text("Slider");
-	ImGui::Separator();
-	ImGui::End();
-}
-
-int main(int argc, char** argv)
-{
+	auto w = refrakt::widget::make("EscapeWidget");
+	w->initialize(escape);
+	system("pause");*/
+	/*
 	json settings;
 	std::ifstream("settings.json") >> settings;
 
@@ -303,10 +242,10 @@ int main(int argc, char** argv)
 		std::istreambuf_iterator<char>());
 
 
-	EscapeWidget w;
-	w.initialize(fpSrc);
+	std::unique_ptr <refrakt::widget> w = refrakt::widget::make("EscapeWidget");
+	w->initialize(fpSrc);
 
-	auto param = w.create_parameter_set();
+	auto param = w->create_parameter_set();
 
 	bool showGui = true;
 
@@ -325,19 +264,10 @@ int main(int argc, char** argv)
 
 	float time = 0;
 
-	//auto server = std::thread([&]() {
-		crow::SimpleApp app;
-
-		CROW_ROUTE(app, "/")
-			([&]() {
-			return nlohmann::json(param).dump();
-		});
-
-		app.port(18080).run(); 
-	//});
+	auto lol = refrakt::make_arg(3U);
 
 	while (window.isOpen()) {
-
+	
 		sf::Event event;
 
 		while (window.pollEvent(event)) {
@@ -346,7 +276,7 @@ int main(int argc, char** argv)
 			if (event.type == sf::Event::Closed ||
 				(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Key::Escape)) {
 				window.close();
-				app.stop();
+				
 				return 0;
 			}
 
@@ -361,10 +291,12 @@ int main(int argc, char** argv)
 					sf::Vector2 size = window.getSize();
 					screenInfo.width = size.x;
 					screenInfo.height = size.y;
-					window.create(sf::VideoMode::getDesktopMode(), "refrakt", sf::Style::None, ctxSettings);
+					auto newsize = sf::VideoMode::getDesktopMode();
+					newsize.height += 1;
+					window.create(newsize, "refrakt", sf::Style::None, ctxSettings);
 				}
 				fullscreen ^= true;
-				w.initialize(fpSrc);
+				//w->initialize(fpSrc);
 			}
 		}
 
@@ -381,13 +313,13 @@ int main(int argc, char** argv)
 
 			ImGui::Begin("Editor"); {
 				if (ImGui::Button("Compile")) {
-					try {
-						w.initialize(editor.GetText());
-						fpSrc = editor.GetText();
-					}
-					catch (refrakt::widget::compile_exception& e) {
-						std::cout << e.what() << std::endl;
-					}
+					//try {
+					//	w->initialize(editor.GetText());
+					//	fpSrc = editor.GetText();
+					//}
+					//catch (refrakt::widget::compile_exception& e) {
+					//	std::cout << e.what() << std::endl;
+					//}
 				}
 				editor.Render("TextEditor");
 				
@@ -400,18 +332,18 @@ int main(int argc, char** argv)
 		}
 
 		ImGui::SameLine();
-
+		auto dude = refrakt::arg_t{};
 		if (ImGui::Button("Paste Parameters")) {
 			refrakt::struct_t loaded = nlohmann::json::parse(ImGui::GetClipboardText());
 			for (auto& [name, value] : loaded) {
-				if (param.has(name)) param[name] = value;
+				if (param.has(name)) param.get(name) = value;
 			}
 		}
 		refrakt::type_helpers::imgui::display(param["center"], "center", refrakt::dvec2{ -5.0, 5.0 }, .001);
 		refrakt::type_helpers::imgui::display(param["scale"], "scale", refrakt::dvec2{ .5, 1000.0 }, .05);
 		refrakt::type_helpers::imgui::display(param["rotation"], "rotation", refrakt::dvec2{ -360, 360 }, .05);
-		refrakt::type_helpers::imgui::display(param.get<refrakt::struct_t>("hue").get("shift"), "hue_shift", refrakt::dvec2{ 0, 1 }, .0001);
-		refrakt::type_helpers::imgui::display(param.get<refrakt::struct_t>("hue").get("stretch"), "hue_stretch", refrakt::dvec2{ 0, 4 }, .001);
+		refrakt::type_helpers::imgui::display(param.get_as<refrakt::struct_t>("hue").get("shift"), "hue_shift", refrakt::dvec2{ 0, 1 }, .0001);
+		refrakt::type_helpers::imgui::display(param.get_as<refrakt::struct_t>("hue").get("stretch"), "hue_stretch", refrakt::dvec2{ 0, 4 }, .001);
 		refrakt::type_helpers::imgui::display(param["exponent"], "exponent", refrakt::dvec2{ -4.0, 4.0 }, .001);
 		refrakt::type_helpers::imgui::display(param["escape_radius"], "escape_radius", refrakt::dvec2{ 0, 100.0 }, .001);
 		refrakt::type_helpers::imgui::display(param["max_iterations"], "escape", refrakt::dvec2{ 0, 1000.0 }, 1);
@@ -431,7 +363,7 @@ int main(int argc, char** argv)
 		param["offset"] = refrakt::vec2{ 1.0f / size.x, 1.0f / size.y };
 
 		glViewport(0, 0, size.x, size.y);
-		w(param);
+		(*w)(param);
 
 		if (showGui) {
 			window.pushGLStates();
@@ -442,10 +374,11 @@ int main(int argc, char** argv)
 		}
 		else ImGui::EndFrame();
 		window.display();
-		param.get<refrakt::float_t>("time")[0] += timer.restart().asMilliseconds() / 1000.0f;
+		param.get_as<refrakt::float_t>("time")[0] += timer.restart().asMilliseconds() / 1000.0f;
 	}
-	app.stop();
+
 	ImGui::SFML::Shutdown();
-	return 0;
-}
+
+	*/
+//}
 

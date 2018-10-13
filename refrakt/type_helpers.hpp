@@ -49,8 +49,6 @@ namespace refrakt::type_helpers::opengl {
 	void push(GLuint handle, const std::string& name, const refrakt::dmat4x3& value);
 	void push(GLuint handle, const std::string& name, const refrakt::dmat4x4& value);
 
-	void push(GLuint handle, const std::string& name, const refrakt::struct_t& value);
-
 	void push(GLuint handle, const std::string& name, const refrakt::arg_t& value);
 }
 

@@ -67,8 +67,6 @@ namespace refrakt {
 		USING_WITH_STATIC_ASSERT(dmat4x3, dvec4, 3, 96)
 		USING_WITH_STATIC_ASSERT(dmat4x4, dvec4, 4, 128)
 
-		class struct_t;
-
 		using arg_t = std::variant<
 		float_t, double_t, int32_t, uint32_t,
 		vec2, dvec2, ivec2, uvec2,
@@ -79,43 +77,38 @@ namespace refrakt {
 		mat4x2, mat4x3, mat4x4,
 		dmat2x2, dmat2x3, dmat2x4,
 		dmat3x2, dmat3x3, dmat3x4,
-		dmat4x2, dmat4x3, dmat4x4,
-		struct_t
+		dmat4x2, dmat4x3, dmat4x4
 		>;
 
 	auto type_string(const arg_t& arg) -> const std::string;
-	auto type_string(const struct_t& arg) -> const std::string;
 
-	class struct_t {
-	public:
-		struct_t() {};
-		struct_t(std::initializer_list<std::pair<std::string, refrakt::arg_t>> l);
-		struct_t(const struct_t&) = default;
-		auto add(const std::string& name, const std::string& type) -> refrakt::arg_t&;
-		auto get(const std::string& name) -> refrakt::arg_t&;
-		auto get(const std::string& name) const -> const refrakt::arg_t&;
-		auto list() const ->std::vector<std::string>;
-		auto type_string() const -> const std::string;
+	using struct_t = std::map<std::string, arg_t>;
 
-		template<typename T>
-		auto get(const std::string& name) const -> const T& { return std::get<T>(get(name)); }
+	void from_json(const nlohmann::json& j, refrakt::struct_t& s);
+}
 
-		template<typename T>
-		auto get(const std::string& name) -> T& { return std::get<T>(get(name)); }
+/*namespace nlohmann {
+	template <typename... Ts>
+	struct adl_serializer<std::variant<Ts...>> {
+		static void to_json(json& j, const std::variant<Ts...>& opt) {
+			std::visit([&j](auto&& v) {j = v; }, opt);
+		}
 
-		auto begin() const { return members_.begin(); }
-		auto end() const { return members_.end(); }
-
-		bool has(const std::string& name) { return members_.count(name) > 0; }
-
-		auto operator[](const std::string& key) -> refrakt::arg_t& { return members_[key]; }
-
-	private:
-		std::map<std::string, refrakt::arg_t> members_{};
+		static void from_json(const json& j, std::variant<Ts...>& opt) {
+		if (j.is_null()) {
+		opt = boost::none;
+		}
+		else {
+		opt = j.get<T>(); // same as above, but with
+		// adl_serializer<T>::from_json
+		}
+		}
 	};
 
-	void to_json(nlohmann::json& j, const refrakt::struct_t& s);
-	void to_json(nlohmann::json& j, const refrakt::arg_t& a);
-	void from_json(const nlohmann::json& j, refrakt::struct_t& s);
-
-}
+	template <>
+	struct adl_serializer<std::map<std::string, refrakt::arg_t>> {
+		static void to_json(json& j, const refrakt::struct_t& s) {
+			for (auto kv : s) j[kv.first + ":" + refrakt::type_string(kv.second)] = kv.second;
+		}
+	};
+}*/
