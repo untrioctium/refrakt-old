@@ -88,7 +88,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)dependencies\lib\glew-2.1.0\include;$(SolutionDir)dependencies\include;$(SolutionDir)dependencies\lib\lua\include;$(SolutionDir)dependencies\lib\SFML-2.4.2\include;C:\Program Files\boost\boost_1_68_0</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)dependencies\lib\glew-2.1.0\include;$(SolutionDir)dependencies\include;$(SolutionDir)dependencies\lib\lua\include;$(SolutionDir)dependencies\lib\SFML-2.4.2\include;C:\Program Files\boost\boost_1_68_0;$(SolutionDir)refrakt</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>GLEW_STATIC;__WINDOWS_MM__;_SILENCE_CXX17_ALLOCATOR_VOID_DEPRECATION_WARNING;_SCL_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <EnablePREfast>false</EnablePREfast>
       <LanguageStandard>stdcpp17</LanguageStandard>
@@ -142,7 +142,7 @@
     <ClCompile Include="texture.cpp" />
     <ClCompile Include="type_helpers.cpp" />
     <ClCompile Include="widget.cpp" />
-    <ClCompile Include="Widgets\compute_widget.cpp" />
+    <ClCompile Include="widgets\glsl_widget.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\dependencies\include\base64.h" />

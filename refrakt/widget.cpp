@@ -7,4 +7,5 @@
 using json = nlohmann::json;
 
 namespace refrakt {
+
 }
