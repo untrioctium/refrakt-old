@@ -1,6 +1,9 @@
 // Adapted from "Unforgettable Factory Registration" by Nir Friedman
 // http://www.nirfriedman.com/2018/04/29/unforgettable-factory/
 
+#include <memory>
+#include <unordered_map>
+#include <iostream>
 template <class Base, class... Args> class Factory {
 public:
 
@@ -22,6 +25,7 @@ public:
 
 		static bool registerT() {
 			const auto name = demangle();
+			std::cout << name << std::endl;
 			Factory::data()[name] = [](Args... args) -> std::unique_ptr<Base> {
 				return std::make_unique<T>(std::forward<Args>(args)...);
 			};

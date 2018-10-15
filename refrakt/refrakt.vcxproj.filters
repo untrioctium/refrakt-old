@@ -13,12 +13,6 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="Scripts">
-      <UniqueIdentifier>{79c06a83-1354-4d31-975a-c2d10b8783c9}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Scripts\Escape">
-      <UniqueIdentifier>{4994e9f2-3cbb-4c8d-9b96-dc584d02db95}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\Dependencies">
       <UniqueIdentifier>{3d2079ce-67ea-411d-8cc1-e1eec74a78ff}</UniqueIdentifier>
     </Filter>
@@ -28,11 +22,11 @@
     <Filter Include="Source Files\Widgets">
       <UniqueIdentifier>{10472eba-7ddc-4f6d-9820-90a5b9ce2ac3}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Widgets">
+      <UniqueIdentifier>{923a64a9-2ae5-46c2-b0e9-f3ae038637ba}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="GLtypes.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -69,7 +63,10 @@
     <ClCompile Include="texture.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="widgets\glsl_widget.cpp">
+    <ClCompile Include="Widgets\glsl_widget.cpp">
+      <Filter>Source Files\Widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="particle_widget.cpp">
       <Filter>Source Files\Widgets</Filter>
     </ClCompile>
   </ItemGroup>
@@ -130,20 +127,29 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\programs\escape.lua">
-      <Filter>Scripts\Escape</Filter>
-    </None>
-    <None Include="..\programs\escape.frag">
-      <Filter>Scripts\Escape</Filter>
-    </None>
     <None Include="..\settings.json">
       <Filter>Resource Files</Filter>
     </None>
     <None Include="factory.hpp">
       <Filter>Header Files</Filter>
     </None>
-    <None Include="..\programs\escape.json">
-      <Filter>Scripts\Escape</Filter>
+    <None Include="..\widgets\density.frag">
+      <Filter>Widgets</Filter>
+    </None>
+    <None Include="..\widgets\fern.frag">
+      <Filter>Widgets</Filter>
+    </None>
+    <None Include="..\widgets\gradient.frag">
+      <Filter>Widgets</Filter>
+    </None>
+    <None Include="..\widgets\invert.frag">
+      <Filter>Widgets</Filter>
+    </None>
+    <None Include="..\widgets\random.frag">
+      <Filter>Widgets</Filter>
+    </None>
+    <None Include="..\widgets\tone.frag">
+      <Filter>Widgets</Filter>
     </None>
   </ItemGroup>
 </Project>

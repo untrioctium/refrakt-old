@@ -138,11 +138,11 @@
     <ClCompile Include="..\dependencies\include\TextEditor.cpp" />
     <ClCompile Include="app.cpp" />
     <ClCompile Include="GLtypes.cpp" />
-    <ClCompile Include="main.cpp" />
+    <ClCompile Include="particle_widget.cpp" />
     <ClCompile Include="texture.cpp" />
     <ClCompile Include="type_helpers.cpp" />
     <ClCompile Include="widget.cpp" />
-    <ClCompile Include="widgets\glsl_widget.cpp" />
+    <ClCompile Include="Widgets\glsl_widget.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\dependencies\include\base64.h" />
@@ -165,10 +165,13 @@
     <ClInclude Include="widget.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\programs\escape.frag" />
-    <None Include="..\programs\escape.json" />
-    <None Include="..\programs\escape.lua" />
     <None Include="..\settings.json" />
+    <None Include="..\widgets\density.frag" />
+    <None Include="..\widgets\fern.frag" />
+    <None Include="..\widgets\gradient.frag" />
+    <None Include="..\widgets\invert.frag" />
+    <None Include="..\widgets\random.frag" />
+    <None Include="..\widgets\tone.frag" />
     <None Include="factory.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

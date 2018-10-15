@@ -7,5 +7,5 @@
 using json = nlohmann::json;
 
 namespace refrakt {
-
+	void widget::setup(nlohmann::json config) {}
 }

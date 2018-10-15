@@ -16,6 +16,7 @@ namespace /*type_string*/ refrakt {
 	auto type_string(const refrakt::double_t&) -> const std::string { return "double"; }
 	auto type_string(const refrakt::int32_t&) -> const std::string { return "int32"; }
 	auto type_string(const refrakt::uint32_t&) -> const std::string { return "uint32"; }
+	auto type_string(const texture_handle&) -> const std::string { return "texture_handle"; }
 
 	MAKE_TYPE_STRING_FUNCTION(vec2);
 	MAKE_TYPE_STRING_FUNCTION(dvec2);

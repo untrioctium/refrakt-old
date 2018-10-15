@@ -47,7 +47,10 @@ namespace refrakt::type_helpers::opengl {
 			push(handle, name + "." + mem.first, mem.second);
 	}
 
-	void push(GLuint handle, const std::string& name, const refrakt::arg_t& value) { std::visit([handle, &name](auto&& value) { push(handle, name, value); }, value); }
+	void push(GLuint handle, const std::string& name, const refrakt::arg_t& value) { std::visit([handle, &name](auto&& value) { 
+		if constexpr(is_static_array_v<std::decay_t<decltype(value)>>)
+			push(handle, name, value); 
+	}, value); }
 
 }
 
@@ -104,5 +107,5 @@ refrakt::arg_t refrakt::type_helpers::factory(const std::string& name) {
 		MAKE_TYPE_FACTORY(dmat4x4),
 	};
 
-	return types[name];
+	return types.find(name)->second;
 }

@@ -2,7 +2,7 @@
 #include "texture.hpp"
 #include <tuple>
 #include <array>
-
+#include <iostream>
 namespace refrakt {
 	namespace detail {
 		std::uint32_t allocate_texture(texture::descriptor desc) {
@@ -50,6 +50,8 @@ namespace refrakt {
 			glBindTexture(GL_TEXTURE_2D, tex);
 			auto& format = format_map.at(std::make_tuple(desc.channels, desc.bytes_per_channel, desc.format));
 			glTexImage2D(GL_TEXTURE_2D, 0, format[0], desc.w, desc.h, 0, format[1], format[2], 0);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
 			glBindTexture(GL_TEXTURE_2D, bound_id);
 
@@ -68,16 +70,16 @@ namespace refrakt {
 	auto texture::handle() -> std::uint32_t {
 		return handle_;
 	}
-
-	void texture::on_notify(events::gl_reset::tag) {
-		handle_ = detail::allocate_texture(info_);
-	}
 	
 	void texture::on_notify(events::gl_calc_vram_usage::tag, std::size_t& count) {
 		count += info_.size();
 	}
 	
-	auto texture_pool::request(texture::descriptor desc) -> texture_pool::texture_handle {
+	auto texture_pool::request(std::size_t w, std::size_t h, texture::format format, std::uint8_t channels, std::uint8_t bytes_per_channel) -> texture_handle {
+		return request({ w, h, format, channels, bytes_per_channel });
+	}
+
+	auto texture_pool::request(texture::descriptor desc) -> texture_handle {
 		// TODO: ensure channels and bpc are sane
 
 		// silently promote 8bpc floats to 16bpc
@@ -91,10 +93,12 @@ namespace refrakt {
 		
 		auto& sub_pool = sub_pool_iter->second;
 
-		if (sub_pool.size() == 0) sub_pool.push_back(detail::allocate_texture(desc));
-
-		auto handle = sub_pool.back();
-		sub_pool.pop_back();
+		std::uint32_t handle;
+		if (sub_pool.size() == 0) handle = detail::allocate_texture(desc);
+		else {
+			handle = sub_pool.back();
+			sub_pool.pop_back();
+		}
 
 		return texture_handle{
 				new texture{desc, handle},
@@ -103,10 +107,6 @@ namespace refrakt {
 					delete t;
 				}
 		};
-	}
-
-	void texture_pool::on_notify(events::gl_reset::tag) {
-		for (auto& sub_pool : pool) sub_pool.second.clear();
 	}
 
 	void texture_pool::on_notify(events::gl_calc_vram_usage::tag, std::size_t& count) {

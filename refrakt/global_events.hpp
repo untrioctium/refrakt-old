@@ -48,6 +48,6 @@ namespace refrakt {
 }
 
 namespace refrakt::events {
-	struct gl_reset : public public_global_event<gl_reset> {};
+	struct gl_was_reset : public public_global_event<gl_was_reset> {};
 	struct gl_calc_vram_usage : public public_global_event<gl_calc_vram_usage, std::size_t&> {};
 }

@@ -12,6 +12,7 @@ namespace refrakt {
 		using param_meta_t = nlohmann::json;
 
 		widget(Key) {};
+		~widget() {};
 
 		virtual void setup(nlohmann::json config);
 		virtual void run(param_t& input, param_t& output) = 0;

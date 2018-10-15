@@ -1,6 +1,7 @@
 #pragma once
 #include <variant>
 #include "json.hpp"
+#include "texture.hpp"
 
 namespace refrakt {
 
@@ -77,9 +78,11 @@ namespace refrakt {
 		mat4x2, mat4x3, mat4x4,
 		dmat2x2, dmat2x3, dmat2x4,
 		dmat3x2, dmat3x3, dmat3x4,
-		dmat4x2, dmat4x3, dmat4x4
+		dmat4x2, dmat4x3, dmat4x4,
+		texture_handle
 		>;
 
+	auto type_string(const texture_handle& arg) -> const std::string;
 	auto type_string(const arg_t& arg) -> const std::string;
 
 	using struct_t = std::map<std::string, arg_t>;
