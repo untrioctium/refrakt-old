@@ -1,6 +1,7 @@
 #include "widget.hpp"
 #include <GL/glew.h>
 #include "type_helpers.hpp"
+#include <thread>
 
 #include <iostream>
 
@@ -52,15 +53,21 @@ public:
 		float dx = 1.0 / (size_.first - 1);
 		float dy = 1.0 / (size_.second - 1);
 
-		int x = 0, y = 0;
-		for (int i = 0; i < arr_size; i += 2, x++) {
-			if (x == size_.first) {
-				x = 0; y++;
-			}
+		unsigned int total_threads = std::thread::hardware_concurrency();
+		unsigned int per_thread = arr_size / 2 / std::thread::hardware_concurrency();
+		unsigned int stragglers = arr_size / 2 % std::thread::hardware_concurrency();
+		std::vector<std::thread> threads;
 
-			vertex_data[i] = x / float(size_.first);
-			vertex_data[i + 1] = y / float(size_.second);
+		for (int i = 0; i < total_threads; i++) {
+			threads.push_back(std::thread{ [this, start = i * per_thread, end = (i == total_threads - 1) ? arr_size / 2 : (i + 1) * per_thread]() {
+				for (int i = start; i < end; i++) {
+					vertex_data[i * 2] = i % size_.first / float(size_.first);
+					vertex_data[i * 2 + 1] = i / size_.first / float(size_.second);
+				}
+			}});
 		}
+
+		for (auto& t : threads) t.join();
 
 		static const char* vp_src = R"shader(
 			#version 430
@@ -72,7 +79,7 @@ public:
 			//uniform sampler2d col;
 
 			void main() {
-				frag_color = vec4(vertex_pos.x, vertex_pos.x, 1.0 - vertex_pos.y, 1.0);//texture(col, vertex_pos);
+				frag_color = vec4(vertex_pos.x, vertex_pos.y, 0.25, 1.0);//texture(col, vertex_pos);
 				gl_Position = vec4(texture(pos, vertex_pos).xyz, 1.0);
 			}
 
@@ -122,7 +129,7 @@ public:
 		gen_buffers();
 	}
 
-	void run(refrakt::widget::param_t& input, refrakt::widget::param_t& output) {
+	void run(refrakt::widget::param_t& input, refrakt::widget::param_t& output) const {
 		GLint viewport[4];
 		glGetIntegerv(GL_VIEWPORT, viewport);
 

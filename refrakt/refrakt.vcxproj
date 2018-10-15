@@ -143,6 +143,7 @@
     <ClCompile Include="type_helpers.cpp" />
     <ClCompile Include="widget.cpp" />
     <ClCompile Include="Widgets\glsl_widget.cpp" />
+    <ClCompile Include="widgets\luagl_widget.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\dependencies\include\base64.h" />

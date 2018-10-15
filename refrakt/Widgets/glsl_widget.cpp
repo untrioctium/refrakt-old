@@ -91,7 +91,7 @@ public:
 		std::cout << "Widget " << this << " recreating buffers" << std::endl;
 	}
 
-	void run(refrakt::widget::param_t& input, refrakt::widget::param_t& output) {
+	void run(refrakt::widget::param_t& input, refrakt::widget::param_t& output) const {
 
 		GLint viewport[4];
 		glGetIntegerv(GL_VIEWPORT, viewport);
@@ -117,7 +117,7 @@ public:
 			}, kv.second);
 		}
 
-		std::pair<std::size_t, std::size_t> smallest = { std::numeric_limits<std::size_t>::max(), std::numeric_limits<std::size_t>::max() };
+		std::pair<std::size_t, std::size_t> smallest{ std::numeric_limits<std::size_t>::max(), std::numeric_limits<std::size_t>::max() };
 
 		for (auto& kv : output) {
 			std::visit([name = kv.first, this, &smallest](auto&& v){

@@ -15,7 +15,7 @@ namespace refrakt {
 		~widget() {};
 
 		virtual void setup(nlohmann::json config);
-		virtual void run(param_t& input, param_t& output) = 0;
+		virtual void run(param_t& input, param_t& output) const = 0;
 		
 	protected:
 		std::map<std::string, param_meta_t> param_meta_;

@@ -108,7 +108,7 @@ public:
 	int run() {
 		part = refrakt::widget::make("particle_widget");
 		part->setup({
-			{"widget", {{"size", { 1024, 1024 }}}}
+			{"widget", {{"size", { 512, 512 }}}}
 		});
 
 		fern = refrakt::widget::make("glsl_widget");
@@ -252,10 +252,10 @@ public:
 		refrakt::type_helpers::imgui::display(preg, "pre gamma", { .01, 3 }, .01);
 		refrakt::type_helpers::imgui::display(postg, "post gamma", { .01, 3 }, .01);
 
-		auto handle = pool.request(1024, 1024, refrakt::texture::format::Float, 3, 4);
-		auto drawn = pool.request(1280, 720, refrakt::texture::format::Float, 4, 4);
-		auto blurred = pool.request(1280, 720, refrakt::texture::format::Float, 4, 4);
-		auto toned = pool.request(1280, 720, refrakt::texture::format::Float, 4, 4);
+		auto handle = pool.request(512, 512, refrakt::texture::format::Float, 3, 4);
+		auto drawn = pool.request(1920, 1080, refrakt::texture::format::Float, 4, 4);
+		auto blurred = pool.request(1920, 1080, refrakt::texture::format::Float, 4, 4);
+		auto toned = pool.request(1920, 1080, refrakt::texture::format::Float, 4, 4);
 
 		refrakt::widget::param_t in = {};
 		refrakt::widget::param_t out = { {"result", handle} };
@@ -274,7 +274,7 @@ public:
 		tone->run(in, out);
 
 
-		//show_main_menu();
+		show_main_menu();
 		glViewport(0, 0, size.x, size.y);
 		window.clear();
 

@@ -18,7 +18,7 @@ vec2 fern( vec2 p, float f ) {
 }
 
 void main() {
-	vec2 p = vec2(pos);
+	vec2 p = vec2(0.0);
 
 	for( int i = 0; i < 50; i++ ) p = fern(p, gold_noise(p, dot(p, pos) + 13000.0));
 
