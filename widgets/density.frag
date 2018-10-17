@@ -39,9 +39,8 @@ void main() {
 			float gauss = gaussian(x, y, sig);
 			kernel_sum += gauss;
 			total_sum += gauss * texture(tex, pos + vec2( dx * float(x), dy * float(y)));
-			total +=1;
 		}
 	}
 
-	result = total_sum / (total * kernel_sum);
+	result = total_sum / (kernel_sum);
 }

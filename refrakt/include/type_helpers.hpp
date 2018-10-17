@@ -1,8 +1,10 @@
 #pragma once
 
 #include <GL/glew.h>
+#include <imgui.h>
+
 #include "GLtypes.hpp"
-#include "imgui.h"
+
 
 namespace refrakt::type_helpers::opengl {
 

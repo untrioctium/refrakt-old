@@ -35,7 +35,7 @@ namespace refrakt {
 		const descriptor& info();
 		std::uint32_t handle();
 
-		void on_notify(events::gl_calc_vram_usage::tag, std::size_t& count);
+		std::size_t on_notify(events::gl_calc_vram_usage::tag);
 	private:
 		std::uint32_t handle_;
 		descriptor info_;
@@ -43,15 +43,21 @@ namespace refrakt {
 
 	using texture_handle = std::shared_ptr<texture>;
 
-	class texture_pool: public events::gl_calc_vram_usage::observer {
+	class texture_pool: public events::gl_calc_vram_usage::observer, events::gl_collect_garbage::observer {
 	public:
+
+		texture_pool();
+		~texture_pool();
 
 		texture_handle request(texture::descriptor desc);
 		texture_handle request(std::size_t w, std::size_t h, texture::format format, std::uint8_t channels, std::uint8_t bytes_per_channel);
 
-		void on_notify(events::gl_calc_vram_usage::tag, std::size_t& count);
+		std::size_t on_notify(events::gl_calc_vram_usage::tag);
+		void on_notify(events::gl_collect_garbage::tag);
 
 	private:
-		std::map<texture::descriptor, std::vector<std::uint32_t>> pool;
+		std::map<texture::descriptor, std::vector<std::pair<std::uint32_t, std::uint32_t>>> pool;
+
+		const std::uint32_t MAX_AGE = 10U;
 	};
 }

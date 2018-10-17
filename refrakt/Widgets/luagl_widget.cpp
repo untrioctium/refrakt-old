@@ -1,5 +1,7 @@
+#include <sol/sol.hpp>
+
 #include "widget.hpp"
-#include "sol.hpp"
+
 
 class luagl_widget : public refrakt::widget::Registrar<luagl_widget> {
 private:

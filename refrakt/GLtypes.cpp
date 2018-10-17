@@ -1,7 +1,8 @@
-#include "GLtypes.hpp"
-#include "type_helpers.hpp"
 #include <initializer_list>
 #include <iostream>
+
+#include "GLtypes.hpp"
+#include "type_helpers.hpp"
 
 namespace /*type_string*/ refrakt {
 #define MAKE_TYPE_STRING_FUNCTION(name) auto type_string( const name& value ) -> const std::string { return #name; }

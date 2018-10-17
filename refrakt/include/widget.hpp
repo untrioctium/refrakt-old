@@ -1,7 +1,8 @@
 #include <set>
 #include <map>
+#include <nlohmann/json.hpp>
+
 #include "factory.hpp"
-#include "json.hpp"
 #include "GLtypes.hpp"
 
 namespace refrakt {

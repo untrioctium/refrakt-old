@@ -13,9 +13,6 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="Header Files\Dependencies">
-      <UniqueIdentifier>{3d2079ce-67ea-411d-8cc1-e1eec74a78ff}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\Dependencies">
       <UniqueIdentifier>{d704a6e2-22b4-474b-9616-ed8b548552d1}</UniqueIdentifier>
     </Filter>
@@ -36,27 +33,6 @@
     <ClCompile Include="type_helpers.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\dependencies\include\base64.cpp">
-      <Filter>Source Files\Dependencies</Filter>
-    </ClCompile>
-    <ClCompile Include="..\dependencies\include\imgui.cpp">
-      <Filter>Source Files\Dependencies</Filter>
-    </ClCompile>
-    <ClCompile Include="..\dependencies\include\imgui_demo.cpp">
-      <Filter>Source Files\Dependencies</Filter>
-    </ClCompile>
-    <ClCompile Include="..\dependencies\include\imgui_draw.cpp">
-      <Filter>Source Files\Dependencies</Filter>
-    </ClCompile>
-    <ClCompile Include="..\dependencies\include\imgui-SFML.cpp">
-      <Filter>Source Files\Dependencies</Filter>
-    </ClCompile>
-    <ClCompile Include="..\dependencies\include\RtMidi.cpp">
-      <Filter>Source Files\Dependencies</Filter>
-    </ClCompile>
-    <ClCompile Include="..\dependencies\include\TextEditor.cpp">
-      <Filter>Source Files\Dependencies</Filter>
-    </ClCompile>
     <ClCompile Include="app.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -66,75 +42,37 @@
     <ClCompile Include="Widgets\glsl_widget.cpp">
       <Filter>Source Files\Widgets</Filter>
     </ClCompile>
-    <ClCompile Include="particle_widget.cpp">
-      <Filter>Source Files\Widgets</Filter>
-    </ClCompile>
     <ClCompile Include="widgets\luagl_widget.cpp">
       <Filter>Source Files\Widgets</Filter>
     </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="GLtypes.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="widget.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="type_helpers.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\dependencies\include\base64.h">
-      <Filter>Header Files\Dependencies</Filter>
-    </ClInclude>
-    <ClInclude Include="..\dependencies\include\crow_all.h">
-      <Filter>Header Files\Dependencies</Filter>
-    </ClInclude>
-    <ClInclude Include="..\dependencies\include\imconfig.h">
-      <Filter>Header Files\Dependencies</Filter>
-    </ClInclude>
-    <ClInclude Include="..\dependencies\include\imconfig-SFML.h">
-      <Filter>Header Files\Dependencies</Filter>
-    </ClInclude>
-    <ClInclude Include="..\dependencies\include\imgui.h">
-      <Filter>Header Files\Dependencies</Filter>
-    </ClInclude>
-    <ClInclude Include="..\dependencies\include\imgui_internal.h">
-      <Filter>Header Files\Dependencies</Filter>
-    </ClInclude>
-    <ClInclude Include="..\dependencies\include\imgui-SFML.h">
-      <Filter>Header Files\Dependencies</Filter>
-    </ClInclude>
-    <ClInclude Include="..\dependencies\include\json.hpp">
-      <Filter>Header Files\Dependencies</Filter>
-    </ClInclude>
-    <ClInclude Include="..\dependencies\include\RtMidi.h">
-      <Filter>Header Files\Dependencies</Filter>
-    </ClInclude>
-    <ClInclude Include="..\dependencies\include\stb_rect_pack.h">
-      <Filter>Header Files\Dependencies</Filter>
-    </ClInclude>
-    <ClInclude Include="..\dependencies\include\stb_textedit.h">
-      <Filter>Header Files\Dependencies</Filter>
-    </ClInclude>
-    <ClInclude Include="..\dependencies\include\stb_truetype.h">
-      <Filter>Header Files\Dependencies</Filter>
-    </ClInclude>
-    <ClInclude Include="..\dependencies\include\TextEditor.h">
-      <Filter>Header Files\Dependencies</Filter>
-    </ClInclude>
-    <ClInclude Include="global_events.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="texture.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
+    <ClCompile Include="..\dependencies\imgui\imgui.cpp">
+      <Filter>Source Files\Dependencies</Filter>
+    </ClCompile>
+    <ClCompile Include="..\dependencies\imgui\imgui_demo.cpp">
+      <Filter>Source Files\Dependencies</Filter>
+    </ClCompile>
+    <ClCompile Include="..\dependencies\imgui\imgui_widgets.cpp">
+      <Filter>Source Files\Dependencies</Filter>
+    </ClCompile>
+    <ClCompile Include="..\dependencies\imgui-sfml\imgui-SFML.cpp">
+      <Filter>Source Files\Dependencies</Filter>
+    </ClCompile>
+    <ClCompile Include="..\dependencies\rtmidi\RtMidi.cpp">
+      <Filter>Source Files\Dependencies</Filter>
+    </ClCompile>
+    <ClCompile Include="..\dependencies\imgui\imgui_draw.cpp">
+      <Filter>Source Files\Dependencies</Filter>
+    </ClCompile>
+    <ClCompile Include="widgets\particle_widget.cpp">
+      <Filter>Source Files\Widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="global_events.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\settings.json">
       <Filter>Resource Files</Filter>
-    </None>
-    <None Include="factory.hpp">
-      <Filter>Header Files</Filter>
     </None>
     <None Include="..\widgets\density.frag">
       <Filter>Widgets</Filter>
@@ -154,5 +92,25 @@
     <None Include="..\widgets\tone.frag">
       <Filter>Widgets</Filter>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\factory.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\global_events.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\GLtypes.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\texture.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\type_helpers.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\widget.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

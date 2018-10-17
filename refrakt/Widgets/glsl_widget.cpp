@@ -1,4 +1,3 @@
-#include "widget.hpp"
 #include <GL/glew.h>
 
 #include <fstream>
@@ -7,41 +6,17 @@
 #include <iostream>
 
 #include "type_helpers.hpp"
+#include "widget.hpp"
 
 class glsl_widget : 
 	public refrakt::widget::Registrar<glsl_widget>, 
 	public refrakt::events::gl_was_reset::observer {
 private:
 	GLuint prog_;
-	GLuint vertex_array_;
-	GLuint vertex_buffer_;
 	GLuint fbo_;
 
 	std::string shader_src_;
 
-	void gen_buffers() {
-		glGenVertexArrays(1, &vertex_array_);
-		glBindVertexArray(vertex_array_);
-		glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_);
-
-		static float vertex_data[] = {
-			-1.0f, -1.0f,
-			-1.0f, 1.0f,
-			1.0f, -1.0f,
-			1.0f, 1.0f
-		};
-
-		glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 8, vertex_data, GL_STATIC_DRAW);
-		GLuint pos_ptr = glGetAttribLocation(prog_, "vertex_pos");
-		glVertexAttribPointer(pos_ptr, 2, GL_FLOAT, GL_FALSE, 0, 0);
-		glEnableVertexAttribArray(pos_ptr);
-
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-		glBindVertexArray(0);
-
-		// generate framebuffer
-		glGenFramebuffers(1, &fbo_);
-	}
 public:
 
 	glsl_widget() {}
@@ -60,12 +35,18 @@ public:
 
 		static const char* vp_src = R"shader(
 			#version 430
-			in vec2 vertex_pos;
 			out vec2 pos;
 
+			const vec2 verts[4] = vec2[](
+				vec2(-1.0f, -1.0f),
+				vec2(-1.0f, 1.0f),
+				vec2(1.0f, -1.0f),
+				vec2(1.0f, 1.0f)
+			);
+
 			void main() {
-				pos = vertex_pos * 0.5 + 0.5;
-				gl_Position = vec4(vertex_pos.x, vertex_pos.y, 0.0, 1.0);
+				pos = verts[gl_VertexID] * 0.5 + 0.5;
+				gl_Position = vec4(verts[gl_VertexID], 0.0, 1.0);
 			}
 		)shader";
 
@@ -81,14 +62,12 @@ public:
 
 		glLinkProgram(prog_);
 
-		glGenBuffers(1, &vertex_buffer_);
-
-		gen_buffers();
+		glGenFramebuffers(1, &fbo_);
 	}
 
 	void on_notify(refrakt::events::gl_was_reset::tag) {
-		gen_buffers();
-		std::cout << "Widget " << this << " recreating buffers" << std::endl;
+		glGenFramebuffers(1, &fbo_);
+		std::cout << "Widget " << this << " recreating framebuffer" << std::endl;
 	}
 
 	void run(refrakt::widget::param_t& input, refrakt::widget::param_t& output) const {
@@ -135,11 +114,7 @@ public:
 
 		glViewport(0, 0, smallest.first, smallest.second);
 
-		glBindVertexArray(vertex_array_);
-		glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_);
 		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-		glBindVertexArray(0);
 		glUseProgram(0);
 
 		for (int i = 0; i < bound_input_textures; i++) {

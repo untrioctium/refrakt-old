@@ -25,7 +25,6 @@ public:
 
 		static bool registerT() {
 			const auto name = demangle();
-			std::cout << name << std::endl;
 			Factory::data()[name] = [](Args... args) -> std::unique_ptr<Base> {
 				return std::make_unique<T>(std::forward<Args>(args)...);
 			};

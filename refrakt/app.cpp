@@ -1,11 +1,12 @@
-#include "imgui.h"
-#include "imgui-SFML.h"
+#include <imgui.h>
+#include <imgui-SFML.h>
 #include <GL/glew.h>
 #include <SFML/Graphics/RenderWindow.hpp>
 #include <SFML/Graphics/Sprite.hpp>
 #include <SFML/System/Clock.hpp>
 #include <SFML/Window/Event.hpp>
 #include <SFML/Graphics/RenderTexture.hpp>
+#include <Windows.h>
 
 #include <istream>
 #include <fstream>
@@ -13,7 +14,7 @@
 
 #include "widget.hpp"
 #include "type_helpers.hpp"
-#include <Windows.h>
+
 
 void APIENTRY glDebugOutput(GLenum source,
 	GLenum type,
@@ -107,9 +108,7 @@ public:
 
 	int run() {
 		part = refrakt::widget::make("particle_widget");
-		part->setup({
-			{"widget", {{"size", { 512, 512 }}}}
-		});
+		part->setup({});
 
 		fern = refrakt::widget::make("glsl_widget");
 		fern->setup({
@@ -132,6 +131,8 @@ public:
 		exposure = refrakt::float_t{ 1.0 };
 		preg = refrakt::float_t{ 1.0 };
 		postg = refrakt::float_t{ 1.0 };
+		particles = refrakt::uint32_t{ 128 };
+		prob = refrakt::float_t{ .8f };
 
 		setup_quad_drawer();
 		while (frame()) {}
@@ -147,12 +148,17 @@ public:
 
 		static const char* vp_src = R"shader(
 			#version 430
-			in vec2 vertex_pos;
 			out vec2 pos;
+			const vec2 verts[4] = vec2[](
+				vec2(-1.0f, -1.0f),
+				vec2(-1.0f, 1.0f),
+				vec2(1.0f, -1.0f),
+				vec2(1.0f, 1.0f)
+			);
 
 			void main() {
-				pos = vertex_pos * 0.5 + 0.5;
-				gl_Position = vec4(vertex_pos.x, vertex_pos.y, 0.0, 1.0);
+				pos = verts[gl_VertexID] * 0.5 + 0.5;
+				gl_Position = vec4(verts[gl_VertexID], 0.0, 1.0);
 			}
 		)shader";
 
@@ -177,27 +183,6 @@ public:
 		glAttachShader(prog_, fp);
 
 		glLinkProgram(prog_);
-
-		// generate vertex array quad
-		glGenVertexArrays(1, &vertex_array_);
-		glBindVertexArray(vertex_array_);
-		glGenBuffers(1, &vertex_buffer_);
-		glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_);
-
-		static float vertex_data[] = {
-			-1.0f, -1.0f,
-			-1.0f, 1.0f,
-			1.0f, -1.0f,
-			1.0f, 1.0f
-		};
-
-		glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 8, vertex_data, GL_STATIC_DRAW);
-		GLuint pos_ptr = glGetAttribLocation(prog_, "vertex_pos");
-		glVertexAttribPointer(pos_ptr, 2, GL_FLOAT, GL_FALSE, 0, 0);
-		glEnableVertexAttribArray(pos_ptr);
-
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-		glBindVertexArray(0);
 	}
 
 	void show_main_menu() {
@@ -207,7 +192,7 @@ public:
 			int lastTime = fpsCounter.restart().asMilliseconds();
 			fpsAvg = .9f * fpsAvg + 100.0f / float((lastTime == 0) ? 1 : lastTime);
 
-			ImGui::Text("Press ~ to hide guis. Press F1 to toggle fullscreen. %.0f FPS", fpsAvg);
+			ImGui::Text("Press ~ to hide guis. Press F1 to toggle fullscreen. (%.3f MB VRAM) (%.0f FPS)", refrakt::events::gl_calc_vram_usage::fire() / 1048576.0, fpsAvg);
 
 			ImGui::EndMainMenuBar();
 		}
@@ -237,7 +222,6 @@ public:
 				}
 				fullscreen ^= true;
 				refrakt::events::gl_was_reset::fire();
-				setup_quad_drawer();
 			}
 		}
 
@@ -245,6 +229,8 @@ public:
 
 		auto size = window.getSize();
 
+		refrakt::type_helpers::imgui::display(prob, "probability", { 0, 1 }, .0001);
+		refrakt::type_helpers::imgui::display(particles, "sqrt(particle count)", { 1, 1024 }, 1);
 		refrakt::type_helpers::imgui::display(max, "max width", { 1, 100 }, 1);
 		refrakt::type_helpers::imgui::display(alpha, "alpha", { .01, 10 }, .001);
 		refrakt::type_helpers::imgui::display(sigma, "sigma", { .01, 10 }, .001);
@@ -252,12 +238,12 @@ public:
 		refrakt::type_helpers::imgui::display(preg, "pre gamma", { .01, 3 }, .01);
 		refrakt::type_helpers::imgui::display(postg, "post gamma", { .01, 3 }, .01);
 
-		auto handle = pool.request(512, 512, refrakt::texture::format::Float, 3, 4);
-		auto drawn = pool.request(1920, 1080, refrakt::texture::format::Float, 4, 4);
-		auto blurred = pool.request(1920, 1080, refrakt::texture::format::Float, 4, 4);
-		auto toned = pool.request(1920, 1080, refrakt::texture::format::Float, 4, 4);
+		auto handle = pool.request(std::get<refrakt::uint32_t>(particles)[0], std::get<refrakt::uint32_t>(particles)[0], refrakt::texture::format::Float, 3, 4);
+		auto drawn = pool.request(size.x, size.y, refrakt::texture::format::Float, 4, 4);
+		auto blurred = pool.request(size.x, size.y, refrakt::texture::format::Float, 4, 4);
+		auto toned = pool.request(size.x, size.y, refrakt::texture::format::Float, 4, 4);
 
-		refrakt::widget::param_t in = {};
+		refrakt::widget::param_t in = { {"prob", prob} };
 		refrakt::widget::param_t out = { {"result", handle} };
 		fern->run(in, out);
 
@@ -284,11 +270,7 @@ public:
 		glBindTexture(GL_TEXTURE_2D, toned->handle());
 		glUniform1i(glGetUniformLocation(prog_, "tex") , 0);
 
-		glBindVertexArray(vertex_array_);
-		glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_);
 		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-		glBindVertexArray(0);
 		glUseProgram(0);
 
 		window.pushGLStates();
@@ -297,6 +279,8 @@ public:
 		window.popGLStates();
 
 		window.display();
+
+		refrakt::events::gl_collect_garbage::fire();
 
 		return true;
 	}
@@ -308,11 +292,11 @@ private:
 	sf::VideoMode screen_info;
 	bool fullscreen;
 
-	GLuint prog_, vertex_buffer_, vertex_array_;
+	GLuint prog_;
 
 	refrakt::texture_pool pool;
 	std::unique_ptr<refrakt::widget> part, fern, tone, blur;
-	refrakt::arg_t alpha, max, sigma, exposure, preg, postg;
+	refrakt::arg_t particles,alpha, max, sigma, exposure, preg, postg, prob;
 
 };
 

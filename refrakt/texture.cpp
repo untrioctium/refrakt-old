@@ -1,8 +1,11 @@
 #include <GL/glew.h>
-#include "texture.hpp"
 #include <tuple>
 #include <array>
 #include <iostream>
+#include <numeric>
+
+#include "texture.hpp"
+
 namespace refrakt {
 	namespace detail {
 		std::uint32_t allocate_texture(texture::descriptor desc) {
@@ -55,7 +58,18 @@ namespace refrakt {
 
 			glBindTexture(GL_TEXTURE_2D, bound_id);
 
+			[&](auto&&...args) { (std::cout << ... << args); std::cout << std::endl; }(
+				"Allocated texture ", tex, ": ", desc.w, "x", desc.h, "x", desc.bytes_per_channel * desc.channels * 8, " (", std::uint32_t(desc.channels), " ", 
+				(desc.format == refrakt::texture::format::Float)? "float": (desc.format == refrakt::texture::format::SignedInt)? "int": "uint", 
+				desc.bytes_per_channel * 8, " channels, ", desc.bytes_per_channel * desc.channels * desc.w * desc.h / 1048576.0, " megabytes)"
+			);
+
 			return tex;
+		}
+
+		std::set<texture_pool*>& live_pools() {
+			static std::set<texture_pool*> pools;
+			return pools;
 		}
 	}
 
@@ -71,10 +85,13 @@ namespace refrakt {
 		return handle_;
 	}
 	
-	void texture::on_notify(events::gl_calc_vram_usage::tag, std::size_t& count) {
-		count += info_.size();
+	std::size_t texture::on_notify(events::gl_calc_vram_usage::tag) {
+		return info_.size();
 	}
 	
+	texture_pool::texture_pool() { detail::live_pools().insert(this); }
+	texture_pool::~texture_pool() { detail::live_pools().erase(this); }
+
 	auto texture_pool::request(std::size_t w, std::size_t h, texture::format format, std::uint8_t channels, std::uint8_t bytes_per_channel) -> texture_handle {
 		return request({ w, h, format, channels, bytes_per_channel });
 	}
@@ -88,7 +105,7 @@ namespace refrakt {
 		decltype(pool)::iterator sub_pool_iter = pool.find(desc);
 
 		if (sub_pool_iter == pool.end()) {
-			sub_pool_iter = pool.emplace(desc, std::vector<std::uint32_t>{}).first;
+			sub_pool_iter = pool.emplace(desc, std::vector<std::pair<std::uint32_t, std::uint32_t>>{}).first;
 		}
 		
 		auto& sub_pool = sub_pool_iter->second;
@@ -96,20 +113,43 @@ namespace refrakt {
 		std::uint32_t handle;
 		if (sub_pool.size() == 0) handle = detail::allocate_texture(desc);
 		else {
-			handle = sub_pool.back();
+			handle = sub_pool.back().first;
 			sub_pool.pop_back();
 		}
 
 		return texture_handle{
 				new texture{desc, handle},
-				[&sub_pool](texture* t) -> void {
-					sub_pool.push_back(t->handle());
+				[this, desc](texture* t) -> void {
+					if (detail::live_pools().count(this)) {
+						this->pool[desc].push_back({t->handle(), this->MAX_AGE});
+					}
+					else {
+						auto handle = t->handle();
+						glDeleteTextures(1, &handle);
+					}
 					delete t;
 				}
 		};
 	}
 
-	void texture_pool::on_notify(events::gl_calc_vram_usage::tag, std::size_t& count) {
-		for (auto& sub_pool : pool) count += sub_pool.first.size() * sub_pool.second.size();
+	void texture_pool::on_notify(events::gl_collect_garbage::tag) {
+		for (auto& sub_pool : pool) {
+			sub_pool.second.erase(std::remove_if(
+				sub_pool.second.begin(),
+				sub_pool.second.end(),
+				[](std::pair<std::uint32_t, std::uint32_t>& v) -> bool {
+					if (--v.second != 0) return false;
+					glDeleteTextures(1, &v.first);
+					return true;
+				}
+			), sub_pool.second.end());
+		}
+	}
+
+	std::size_t texture_pool::on_notify(events::gl_calc_vram_usage::tag) {
+		return std::accumulate(pool.begin(), pool.end(), 0, [](auto left, auto right) {
+			return left + right.first.size() * right.second.size();
+		});
+		//for (auto& sub_pool : pool) count += sub_pool.first.size() * sub_pool.second.size();
 	}
 }

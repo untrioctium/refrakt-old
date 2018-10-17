@@ -88,16 +88,16 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)dependencies\lib\glew-2.1.0\include;$(SolutionDir)dependencies\include;$(SolutionDir)dependencies\lib\lua\include;$(SolutionDir)dependencies\lib\SFML-2.4.2\include;C:\Program Files\boost\boost_1_68_0;$(SolutionDir)refrakt</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>GLEW_STATIC;__WINDOWS_MM__;_SILENCE_CXX17_ALLOCATOR_VOID_DEPRECATION_WARNING;_SCL_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(SolutionDir)dependencies\lib\glew-2.1.0\include;$(SolutionDir)dependencies\lib\lua\include;$(SolutionDir)dependencies\lib\SFML-2.5.0\include;$(SolutionDir)refrakt\include;$(SolutionDir)dependencies\imgui;$(SolutionDir)dependencies\imgui-sfml;$(SolutionDir)dependencies\json\single_include\;$(SolutionDir)dependencies\sol2\single;$(SolutionDir)dependencies\rtmidi;$(SolutionDir)dependencies\spdlog\include</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>GLEW_STATIC;SFML_STATIC;__WINDOWS_MM__;_SILENCE_CXX17_ALLOCATOR_VOID_DEPRECATION_WARNING;_SCL_SECURE_NO_WARNINGS;IMGUI_USER_CONFIG="imconfig-SFML.h";%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <EnablePREfast>false</EnablePREfast>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>$(SolutionDir)dependencies\lib\glew-2.1.0\lib\;$(SolutionDir)dependencies\lib\SFML-2.4.2\lib;$(SolutionDir)dependencies\lib\rtmidi;$(SolutionDir)dependencies\lib\lua;C:\Program Files\boost\boost_1_68_0\stage\lib\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>opengl32.lib;glu32.lib;glew32s.lib;sfml-graphics-d.lib;sfml-window-d.lib;sfml-system-d.lib;lua53.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)dependencies\lib\glew-2.1.0\lib\;$(SolutionDir)dependencies\lib\SFML-2.5.0\lib;$(SolutionDir)dependencies\lib\lua;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>opengl32.lib;glu32.lib;glew32s.lib;sfml-graphics-s-d.lib;sfml-window-s-d.lib;sfml-system-s-d.lib;lua53.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -129,41 +129,21 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\dependencies\include\base64.cpp" />
-    <ClCompile Include="..\dependencies\include\imgui-SFML.cpp" />
-    <ClCompile Include="..\dependencies\include\imgui.cpp" />
-    <ClCompile Include="..\dependencies\include\imgui_demo.cpp" />
-    <ClCompile Include="..\dependencies\include\imgui_draw.cpp" />
-    <ClCompile Include="..\dependencies\include\RtMidi.cpp" />
-    <ClCompile Include="..\dependencies\include\TextEditor.cpp" />
+    <ClCompile Include="..\dependencies\imgui-sfml\imgui-SFML.cpp" />
+    <ClCompile Include="..\dependencies\imgui\imgui.cpp" />
+    <ClCompile Include="..\dependencies\imgui\imgui_demo.cpp" />
+    <ClCompile Include="..\dependencies\imgui\imgui_draw.cpp" />
+    <ClCompile Include="..\dependencies\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="..\dependencies\rtmidi\RtMidi.cpp" />
     <ClCompile Include="app.cpp" />
+    <ClCompile Include="global_events.cpp" />
     <ClCompile Include="GLtypes.cpp" />
-    <ClCompile Include="particle_widget.cpp" />
     <ClCompile Include="texture.cpp" />
     <ClCompile Include="type_helpers.cpp" />
     <ClCompile Include="widget.cpp" />
     <ClCompile Include="Widgets\glsl_widget.cpp" />
     <ClCompile Include="widgets\luagl_widget.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="..\dependencies\include\base64.h" />
-    <ClInclude Include="..\dependencies\include\crow_all.h" />
-    <ClInclude Include="..\dependencies\include\imconfig-SFML.h" />
-    <ClInclude Include="..\dependencies\include\imconfig.h" />
-    <ClInclude Include="..\dependencies\include\imgui-SFML.h" />
-    <ClInclude Include="..\dependencies\include\imgui.h" />
-    <ClInclude Include="..\dependencies\include\imgui_internal.h" />
-    <ClInclude Include="..\dependencies\include\json.hpp" />
-    <ClInclude Include="..\dependencies\include\RtMidi.h" />
-    <ClInclude Include="..\dependencies\include\stb_rect_pack.h" />
-    <ClInclude Include="..\dependencies\include\stb_textedit.h" />
-    <ClInclude Include="..\dependencies\include\stb_truetype.h" />
-    <ClInclude Include="..\dependencies\include\TextEditor.h" />
-    <ClInclude Include="global_events.hpp" />
-    <ClInclude Include="GLtypes.hpp" />
-    <ClInclude Include="texture.hpp" />
-    <ClInclude Include="type_helpers.hpp" />
-    <ClInclude Include="widget.hpp" />
+    <ClCompile Include="widgets\particle_widget.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\settings.json" />
@@ -173,7 +153,14 @@
     <None Include="..\widgets\invert.frag" />
     <None Include="..\widgets\random.frag" />
     <None Include="..\widgets\tone.frag" />
-    <None Include="factory.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\factory.hpp" />
+    <ClInclude Include="include\global_events.hpp" />
+    <ClInclude Include="include\GLtypes.hpp" />
+    <ClInclude Include="include\texture.hpp" />
+    <ClInclude Include="include\type_helpers.hpp" />
+    <ClInclude Include="include\widget.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
