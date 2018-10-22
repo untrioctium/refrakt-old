@@ -92,6 +92,9 @@
     <None Include="..\widgets\tone.frag">
       <Filter>Widgets</Filter>
     </None>
+    <None Include="..\widgets\pickover.frag">
+      <Filter>Widgets</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\factory.hpp">

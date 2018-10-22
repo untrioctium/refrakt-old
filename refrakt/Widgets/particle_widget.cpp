@@ -4,6 +4,9 @@
 
 #include "type_helpers.hpp"
 #include "widget.hpp"
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 
 class particle_widget : public refrakt::widget::Registrar<particle_widget>, public refrakt::events::gl_was_reset::observer {
 private:
@@ -31,16 +34,19 @@ public:
 			out vec4 frag_color;
 	
 			uniform ivec2 dim;
-			//uniform mat4 view;
+			uniform mat4 view;
+
 			uniform sampler2D pos;
-			//uniform sampler2d col;
+			uniform sampler2D col;
 
 			void main() {
 				vec2 vertex_pos = vec2( (gl_VertexID % dim.x) / float(dim.x), (gl_VertexID / dim.x) / float(dim.y));
 				vec3 v = texture(pos, vertex_pos).xyz;
-				frag_color = vec4( vec3(1.0, 0.0, 0.0) * (1.0 - v.z) + vec3(0.0, 0.0, 1.0) * v.z, 1.0);
+				frag_color = texture(col, vertex_pos);
+
 				if( isnan( dot(frag_color, vec4(1.0))) ) frag_color = vec4(0.0, 0.0, 0.0, 0.0);
-				gl_Position = vec4(v.xy, 0.0, 1.0);
+
+				gl_Position = view * vec4(v.xyz, 1.0);
 			}
 
 		)shader";
@@ -124,9 +130,21 @@ public:
 		}
 
 		auto handle = std::get<refrakt::texture_handle>(output["result"]);
+
+		glm::mat4 projection = glm::perspective(glm::radians(70.0f), float(handle->info().w) / handle->info().h, 0.1f, 100.0f) * glm::lookAt(
+			glm::vec3(0, 0, -3.0), // Camera is at (4,3,3), in World Space
+			glm::vec3(0, 0, 0), // and looks at the origin
+			glm::vec3(0, 1, 0)  // Head is up (set to 0,-1,0 to look upside-down)
+		) * glm::mat4(1.0f);
+
+		glUniformMatrix4fv(glGetUniformLocation(prog_, "view"), 1, false, glm::value_ptr(projection));
+
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, handle->handle(), 0);
-		glClearColor(0.0, 0.0, 0.0, 0.0);
-		glClear(GL_COLOR_BUFFER_BIT);
+		glDrawBuffer(GL_COLOR_ATTACHMENT0);
+		if (std::get<refrakt::uint32_t>(input["clear"])[0] == 1) {
+			glClearColor(0.0, 0.0, 0.0, 0.0);
+			glClear(GL_COLOR_BUFFER_BIT);
+		}
 		glViewport(0, 0, handle->info().w, handle->info().h);
 
 		glDrawArrays(GL_POINTS, 0, total_elements);

@@ -67,7 +67,7 @@ namespace /*json*/ refrakt {
 				using arg_type = std::decay_t<decltype(arg)>;
 
 				if constexpr(refrakt::is_static_array_v<arg_type>) {
-					const std::size_t size = std::min(arg.size(), it.value().size());
+					const std::size_t size = std::min( std::size_t(arg.length()), it.value().size() );
 					for (std::size_t i = 0; i < size; i++)
 						arg[i] = it.value()[i].get<arg_type::value_type>();
 				}

@@ -97,9 +97,9 @@ public:
 		}
 
 		std::pair<std::size_t, std::size_t> smallest{ std::numeric_limits<std::size_t>::max(), std::numeric_limits<std::size_t>::max() };
-
+		std::vector<GLenum> draw_buffers;
 		for (auto& kv : output) {
-			std::visit([name = kv.first, this, &smallest](auto&& v){
+			std::visit([name = kv.first, this, &smallest, &draw_buffers](auto&& v){
 				using type = std::decay_t<decltype(v)>;
 
 				if constexpr(std::is_same_v<type, refrakt::texture_handle>) {
@@ -108,14 +108,18 @@ public:
 
 					GLuint location = glGetFragDataLocation(prog_, name.c_str());
 					glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + location, GL_TEXTURE_2D, v->handle(), 0);
+					draw_buffers.push_back(GL_COLOR_ATTACHMENT0 + location);
 				}
 			}, kv.second);
 		}
 
 		glViewport(0, 0, smallest.first, smallest.second);
+		std::sort(draw_buffers.begin(), draw_buffers.end()); //TODO: Something is wrong with my reasoning that this is needed
+		glDrawBuffers(draw_buffers.size(), draw_buffers.data());
 
 		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 		glUseProgram(0);
+	
 
 		for (int i = 0; i < bound_input_textures; i++) {
 			glActiveTexture(GL_TEXTURE0 + bound_input_textures);
@@ -124,5 +128,7 @@ public:
 
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		glViewport(viewport[0], viewport[1], viewport[2], viewport[2]);
+		//draw_buffers = { GL_COLOR_ATTACHMENT0 };
+		//glDrawBuffers(draw_buffers.size(), draw_buffers.data());
 	}
 };

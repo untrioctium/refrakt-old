@@ -58,6 +58,6 @@ namespace refrakt {
 	private:
 		std::map<texture::descriptor, std::vector<std::pair<std::uint32_t, std::uint32_t>>> pool;
 
-		const std::uint32_t MAX_AGE = 10U;
+		const std::uint32_t MAX_AGE = 3U;
 	};
 }

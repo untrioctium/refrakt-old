@@ -9,11 +9,11 @@ uniform float exposure;
 
 void main() {
 	vec4 input = texture(col, pos);
-	if( input.w < 1.0 ) input.w = 1.0;
+	float factor = ( input.w <= 1.0 )? 0.0: log(input.w)/input.w;
 
 	input = pow(input, vec4(pre_gamma));
 	input *= exposure;
-	input = vec4( input.xyz * log(input.w + 1.0)/input.w, 1.0);
+	input = vec4( input.xyz * factor, 1.0);
 	input = clamp( input, 0, 1 );
 	input = pow(input, vec4(post_gamma));
 	result = vec4( input.xyz, 1.0 );

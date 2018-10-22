@@ -66,14 +66,14 @@ namespace refrakt::type_helpers::imgui {
 	template< typename T >
 	bool display(T& value, const std::string& description, refrakt::dvec2 bounds, const float speed) { return false; } // TODO: struct_t and array_t handling 
 
-	template< typename T, std::size_t s >
-	bool display(refrakt::static_array_t<T, s>& value, const std::string& description, refrakt::dvec2 bounds, const float speed) {
+	template< std::size_t S, typename T, glm::qualifier Q >
+	bool display(glm::vec<S,T,Q> & value, const std::string& description, refrakt::dvec2 bounds, const float speed) {
 		if constexpr(!std::is_arithmetic_v<T>) return false; // TODO: Properly deal with matrices (arrays of vecns)
 		else {
 			const T min_val = static_cast<T>(bounds[0]);
 			const T max_val = static_cast<T>(bounds[1]);
 
-			return ImGui::DragScalarN(description.c_str(), scalar_flag<T>(), value.data(), s, speed, &min_val, &max_val);
+			return ImGui::DragScalarN(description.c_str(), scalar_flag<T>(), &value[0], S, speed, &min_val, &max_val);
 		}
 	}
 

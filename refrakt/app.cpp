@@ -112,7 +112,7 @@ public:
 
 		fern = refrakt::widget::make("glsl_widget");
 		fern->setup({
-			{"widget", {{"source", "fern.frag"}}}
+			{"widget", {{"source", "pickover.frag"}}}
 		});
 
 		tone = refrakt::widget::make("glsl_widget");
@@ -125,16 +125,22 @@ public:
 			{ "widget",{ { "source", "density.frag" } } }
 		});
 
-		alpha = refrakt::float_t{ 1.0 };
-		max = refrakt::uint32_t{ 8 };
-		sigma = refrakt::float_t{ 1.0 };
-		exposure = refrakt::float_t{ 1.0 };
-		preg = refrakt::float_t{ 1.0 };
-		postg = refrakt::float_t{ 1.0 };
-		particles = refrakt::uint32_t{ 128 };
-		prob = refrakt::float_t{ .8f };
+		alpha = refrakt::float_t{ 1.085f };
+		max = refrakt::uint32_t{ 16 };
+		sigma = refrakt::float_t{ 0.758f };
+		exposure = refrakt::float_t{ 0.05f };
+		preg = refrakt::float_t{ 1.22f };
+		postg = refrakt::float_t{ 0.89f };
+		particles = refrakt::uint32_t{ 512 };
+		pick = refrakt::vec4{ -2.0f, -0.49f, -0.21f, -1.82f };
+		len_pow = refrakt::float_t{ 6.0f };
+		angle_pow = refrakt::float_t{ 0.17f };
+		seed = refrakt::float_t{ 0.35235234230f };
+		iters = 64;
+		auto window_size = window.getSize();
 
 		setup_quad_drawer();
+
 		while (frame()) {}
 		window.close();
 		return 0;
@@ -227,38 +233,55 @@ public:
 
 		ImGui::SFML::Update(window, deltaClock.restart());
 
+		bool need_update = false;
+
 		auto size = window.getSize();
+		if (!out_tex || out_tex->info().w != size.x || out_tex->info().h != size.y) {
+			need_update |= true;
+			out_tex = pool.request(size.x, size.y, refrakt::texture::format::Float, 4, 2);
+		}
+		
+		need_update |= ImGui::DragInt("iters", &iters, 1.0f, 1, 64);
+		need_update |= refrakt::type_helpers::imgui::display(pick, "pick", { -2.0, 2.0 }, .01);
+		need_update |= refrakt::type_helpers::imgui::display(len_pow, "len_pow", { 0.0, 3.0 }, .01);
+		need_update |= refrakt::type_helpers::imgui::display(angle_pow, "angle_pow", { 0.0, 3.0 }, .01);
+		need_update |= refrakt::type_helpers::imgui::display(particles, "sqrt(particle count)", { 16, 1024 }, 16);
+		need_update |= refrakt::type_helpers::imgui::display(max, "max width", { 1, 100 }, 1);
+		need_update |= refrakt::type_helpers::imgui::display(alpha, "alpha", { .01, 10 }, .001);
+		need_update |= refrakt::type_helpers::imgui::display(sigma, "sigma", { .01, 10 }, .001);
+		need_update |= refrakt::type_helpers::imgui::display(exposure, "exposure", { .01, 3 }, .01);
+		need_update |= refrakt::type_helpers::imgui::display(preg, "pre gamma", { .01, 3 }, .01);
+		need_update |= refrakt::type_helpers::imgui::display(postg, "post gamma", { .01, 3 }, .01);
 
-		refrakt::type_helpers::imgui::display(prob, "probability", { 0, 1 }, .0001);
-		refrakt::type_helpers::imgui::display(particles, "sqrt(particle count)", { 1, 1024 }, 1);
-		refrakt::type_helpers::imgui::display(max, "max width", { 1, 100 }, 1);
-		refrakt::type_helpers::imgui::display(alpha, "alpha", { .01, 10 }, .001);
-		refrakt::type_helpers::imgui::display(sigma, "sigma", { .01, 10 }, .001);
-		refrakt::type_helpers::imgui::display(exposure, "exposure", { .01, 3 }, .01);
-		refrakt::type_helpers::imgui::display(preg, "pre gamma", { .01, 3 }, .01);
-		refrakt::type_helpers::imgui::display(postg, "post gamma", { .01, 3 }, .01);
+		if (need_update) {
+			std::uint32_t psize = std::get<refrakt::uint32_t>(particles)[0];
 
-		auto handle = pool.request(std::get<refrakt::uint32_t>(particles)[0], std::get<refrakt::uint32_t>(particles)[0], refrakt::texture::format::Float, 3, 4);
-		auto drawn = pool.request(size.x, size.y, refrakt::texture::format::Float, 4, 4);
-		auto blurred = pool.request(size.x, size.y, refrakt::texture::format::Float, 4, 4);
-		auto toned = pool.request(size.x, size.y, refrakt::texture::format::Float, 4, 4);
+			auto handle = pool.request(psize, psize, refrakt::texture::format::Float, 3, 2);
+			auto colors = pool.request(psize, psize, refrakt::texture::format::Float, 4, 2);
 
-		refrakt::widget::param_t in = { {"prob", prob} };
-		refrakt::widget::param_t out = { {"result", handle} };
-		fern->run(in, out);
+			auto drawn = pool.request(size.x, size.y, refrakt::texture::format::Float, 4, 4);
+			auto blurred = pool.request(size.x, size.y, refrakt::texture::format::Float, 4, 4);
+			auto toned = pool.request(size.x, size.y, refrakt::texture::format::Float, 4, 4);
 
-		in = { {"pos", handle} };
-		out = { { "result", drawn} };
-		part->run(in, out);
+			refrakt::widget::param_t in, out;
 
-		in = refrakt::widget::param_t{ {"tex", refrakt::arg_t{drawn}}, {"max_width", max}, {"alpha", alpha}, {"sig", sigma} };
-		out = { {"result", blurred} };
-		blur->run(in, out);
+			for (int i = 0; i < iters; i++) {
+				in = refrakt::widget::param_t{ {"pick", pick}, {"len_pow", len_pow}, {"angle_pow", angle_pow}, {"seed", refrakt::float_t{343.245235f * (i + 1)} } };
+				out = refrakt::widget::param_t{ {"position", handle}, {"color", colors} };
+				fern->run(in, out);
 
-		in = { {"col", blurred}, {"exposure", exposure}, {"pre_gamma", preg}, {"post_gamma", postg} };
-		out = { {"result", toned} };
-		tone->run(in, out);
+				in = { {"pos", handle},{ "col", colors }, {"clear", refrakt::uint32_t{ (i == 0) ? 1u : 0u }} };
+				out = { { "result", drawn} };
+				part->run(in, out);
+			}
+			in = refrakt::widget::param_t{ {"tex", refrakt::arg_t{drawn}}, {"max_width", max}, {"alpha", alpha}, {"sig", sigma} };
+			out = refrakt::widget::param_t{ {"result", blurred} };
+			blur->run(in, out);
 
+			in = refrakt::widget::param_t{ {"col", blurred}, {"exposure", exposure}, {"pre_gamma", preg}, {"post_gamma", postg} };
+			out = refrakt::widget::param_t{ {"result", out_tex} };
+			tone->run(in, out);
+		}
 
 		show_main_menu();
 		glViewport(0, 0, size.x, size.y);
@@ -267,7 +290,7 @@ public:
 		glUseProgram(prog_);
 
 		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, toned->handle());
+		glBindTexture(GL_TEXTURE_2D, out_tex->handle());
 		glUniform1i(glGetUniformLocation(prog_, "tex") , 0);
 
 		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
@@ -296,7 +319,10 @@ private:
 
 	refrakt::texture_pool pool;
 	std::unique_ptr<refrakt::widget> part, fern, tone, blur;
-	refrakt::arg_t particles,alpha, max, sigma, exposure, preg, postg, prob;
+	refrakt::arg_t particles,alpha, max, sigma, exposure, preg, postg, pick, len_pow, angle_pow, seed;
+	std::int32_t iters;
+
+	refrakt::texture_handle out_tex;
 
 };
 
