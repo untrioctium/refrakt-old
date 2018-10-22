@@ -16,3 +16,6 @@
 [submodule "dependencies/rtmidi"]
 	path = dependencies/rtmidi
 	url = https://github.com/thestk/rtmidi
+[submodule "dependencies/glm"]
+	path = dependencies/glm
+	url = https://github.com/g-truc/glm
