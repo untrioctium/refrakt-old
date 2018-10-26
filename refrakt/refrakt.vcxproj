@@ -138,19 +138,24 @@
     <ClCompile Include="app.cpp" />
     <ClCompile Include="global_events.cpp" />
     <ClCompile Include="GLtypes.cpp" />
+    <ClCompile Include="lua_modules.cpp" />
+    <ClCompile Include="lua_modules\global\mod_refrakt.cpp" />
+    <ClCompile Include="lua_modules\gl\mod_gl_base.cpp" />
+    <ClCompile Include="lua_modules\gl\mod_gl_program.cpp" />
     <ClCompile Include="texture.cpp" />
     <ClCompile Include="type_helpers.cpp" />
     <ClCompile Include="widget.cpp" />
     <ClCompile Include="Widgets\glsl_widget.cpp" />
-    <ClCompile Include="widgets\luagl_widget.cpp" />
     <ClCompile Include="widgets\particle_widget.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\settings.json" />
     <None Include="..\widgets\density.frag" />
     <None Include="..\widgets\fern.frag" />
+    <None Include="..\widgets\glsl.lua" />
     <None Include="..\widgets\gradient.frag" />
     <None Include="..\widgets\invert.frag" />
+    <None Include="..\widgets\particle.lua" />
     <None Include="..\widgets\pickover.frag" />
     <None Include="..\widgets\random.frag" />
     <None Include="..\widgets\tone.frag" />
@@ -159,6 +164,7 @@
     <ClInclude Include="include\factory.hpp" />
     <ClInclude Include="include\global_events.hpp" />
     <ClInclude Include="include\GLtypes.hpp" />
+    <ClInclude Include="include\lua_modules.hpp" />
     <ClInclude Include="include\texture.hpp" />
     <ClInclude Include="include\type_helpers.hpp" />
     <ClInclude Include="include\widget.hpp" />

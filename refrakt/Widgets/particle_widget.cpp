@@ -4,9 +4,12 @@
 
 #include "type_helpers.hpp"
 #include "widget.hpp"
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
+#define GLM_ENABLE_EXPERIMENTAL
 
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/euler_angles.hpp>
 
 class particle_widget : public refrakt::widget::Registrar<particle_widget>, public refrakt::events::gl_was_reset::observer {
 private:
@@ -104,38 +107,29 @@ public:
 		glUseProgram(prog_);
 		glBindFramebuffer(GL_FRAMEBUFFER, fbo_);
 
-		int bound_input_textures = 0;
-		int total_elements = 0;
 
-		for (auto& kv : input) {
-			std::visit([name = kv.first, this, &bound_input_textures, &total_elements](auto&& v) {
-				using type = std::decay_t<decltype(v)>;
-
-				if constexpr(refrakt::is_static_array_v<type>)
-					refrakt::type_helpers::opengl::push(prog_, name, v);
-				else if constexpr(std::is_same_v<type, refrakt::texture_handle>) {
-					if (name == "pos") {
-						total_elements = v->info().w * v->info().h;
-						glUniform2i(glGetUniformLocation(prog_, "dim"), v->info().w, v->info().h);
-					}
-
-					GLint location = glGetUniformLocation(prog_, name.c_str());
-					glUniform1i(location, bound_input_textures);
-					glActiveTexture(GL_TEXTURE0 + bound_input_textures);
-					glBindTexture(GL_TEXTURE_2D, v->handle());
-					bound_input_textures++;
-				}
-
-			}, kv.second);
-		}
+		auto v = std::get<refrakt::texture_handle>(input["pos"]);
+		int total_elements = total_elements = v->info().w * v->info().h;
+		glUniform2i(glGetUniformLocation(prog_, "dim"), v->info().w, v->info().h);
+		glUniform1i(glGetUniformLocation(prog_, "pos"), 0);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, v->handle());
+	
+		v = std::get<refrakt::texture_handle>(input["col"]);
+		glUniform1i(glGetUniformLocation(prog_, "col"), 1);
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, v->handle());
 
 		auto handle = std::get<refrakt::texture_handle>(output["result"]);
+
+		float scale = std::get<refrakt::float_t>(input["scale"])[0];
+		auto rot = std::get<refrakt::vec3>(input["rot"]);
 
 		glm::mat4 projection = glm::perspective(glm::radians(70.0f), float(handle->info().w) / handle->info().h, 0.1f, 100.0f) * glm::lookAt(
 			glm::vec3(0, 0, -3.0), // Camera is at (4,3,3), in World Space
 			glm::vec3(0, 0, 0), // and looks at the origin
 			glm::vec3(0, 1, 0)  // Head is up (set to 0,-1,0 to look upside-down)
-		) * glm::mat4(1.0f);
+		) * glm::scale(glm::mat4x4(1.0f), glm::vec3(scale)) * glm::eulerAngleYXZ(glm::radians(rot.x), glm::radians(rot.y), glm::radians(rot.z));
 
 		glUniformMatrix4fv(glGetUniformLocation(prog_, "view"), 1, false, glm::value_ptr(projection));
 

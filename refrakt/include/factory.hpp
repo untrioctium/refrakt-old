@@ -54,5 +54,5 @@ private:
 
 template <class Base, class... Args>
 template <class T>
-bool Factory<Base, Args...>::Registrar<T>::registered =
-Factory<Base, Args...>::Registrar<T>::registerT();
+bool Factory<Base, Args...>::template Registrar<T>::registered =
+Factory<Base, Args...>::template Registrar<T>::registerT();

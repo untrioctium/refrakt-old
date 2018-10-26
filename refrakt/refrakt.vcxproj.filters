@@ -22,6 +22,15 @@
     <Filter Include="Widgets">
       <UniqueIdentifier>{923a64a9-2ae5-46c2-b0e9-f3ae038637ba}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Lua Modules">
+      <UniqueIdentifier>{3b3eb0d7-29a8-4620-9959-c8d4d6f5bf0d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Lua Modules\OpenGL">
+      <UniqueIdentifier>{22d28e86-19da-458d-b5e7-9d8ee91baee8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Lua Modules\Global">
+      <UniqueIdentifier>{fb0c1ff7-787c-45b8-b798-c856bd92cdf0}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="GLtypes.cpp">
@@ -40,9 +49,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Widgets\glsl_widget.cpp">
-      <Filter>Source Files\Widgets</Filter>
-    </ClCompile>
-    <ClCompile Include="widgets\luagl_widget.cpp">
       <Filter>Source Files\Widgets</Filter>
     </ClCompile>
     <ClCompile Include="..\dependencies\imgui\imgui.cpp">
@@ -68,6 +74,18 @@
     </ClCompile>
     <ClCompile Include="global_events.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="lua_modules.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="lua_modules\gl\mod_gl_base.cpp">
+      <Filter>Source Files\Lua Modules\OpenGL</Filter>
+    </ClCompile>
+    <ClCompile Include="lua_modules\gl\mod_gl_program.cpp">
+      <Filter>Source Files\Lua Modules\OpenGL</Filter>
+    </ClCompile>
+    <ClCompile Include="lua_modules\global\mod_refrakt.cpp">
+      <Filter>Source Files\Lua Modules\Global</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -95,6 +113,12 @@
     <None Include="..\widgets\pickover.frag">
       <Filter>Widgets</Filter>
     </None>
+    <None Include="..\widgets\particle.lua">
+      <Filter>Widgets</Filter>
+    </None>
+    <None Include="..\widgets\glsl.lua">
+      <Filter>Widgets</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\factory.hpp">
@@ -113,6 +137,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\widget.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\lua_modules.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

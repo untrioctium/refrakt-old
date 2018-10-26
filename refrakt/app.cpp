@@ -7,6 +7,10 @@
 #include <SFML/Window/Event.hpp>
 #include <SFML/Graphics/RenderTexture.hpp>
 #include <Windows.h>
+#include <chrono>
+
+#include <spdlog/spdlog.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
 
 #include <istream>
 #include <fstream>
@@ -14,7 +18,7 @@
 
 #include "widget.hpp"
 #include "type_helpers.hpp"
-
+#include "lua_modules.hpp"
 
 void APIENTRY glDebugOutput(GLenum source,
 	GLenum type,
@@ -66,6 +70,15 @@ void APIENTRY glDebugOutput(GLenum source,
 class app {
 public:
 	void init(std::vector<std::string> argc) {
+		logger = spdlog::stdout_color_mt("console");
+		logger->info("Logging started");
+		sol::state s;
+		s.open_libraries(sol::lib::base);
+		refrakt::lua::modules::load(s.globals(), "global");
+		refrakt::lua::modules::load(s.globals(), "gl");
+
+		s.script("local what = vec2(1.0); print(what.type);");
+
 		nlohmann::json settings;
 		std::ifstream("settings.json") >> settings;
 
@@ -107,6 +120,7 @@ public:
 	}
 
 	int run() {
+
 		part = refrakt::widget::make("particle_widget");
 		part->setup({});
 
@@ -137,6 +151,9 @@ public:
 		angle_pow = refrakt::float_t{ 0.17f };
 		seed = refrakt::float_t{ 0.35235234230f };
 		iters = 64;
+		scale = refrakt::float_t{ 1.0 };
+		rot = refrakt::vec3{ 0.0 };
+
 		auto window_size = window.getSize();
 
 		setup_quad_drawer();
@@ -243,6 +260,8 @@ public:
 		
 		need_update |= ImGui::DragInt("iters", &iters, 1.0f, 1, 64);
 		need_update |= refrakt::type_helpers::imgui::display(pick, "pick", { -2.0, 2.0 }, .01);
+		need_update |= refrakt::type_helpers::imgui::display(scale, "scale", { .1, 5.0 }, .01);
+		need_update |= refrakt::type_helpers::imgui::display(rot, "rot", { -180.0, 180.0 }, 1);
 		need_update |= refrakt::type_helpers::imgui::display(len_pow, "len_pow", { 0.0, 3.0 }, .01);
 		need_update |= refrakt::type_helpers::imgui::display(angle_pow, "angle_pow", { 0.0, 3.0 }, .01);
 		need_update |= refrakt::type_helpers::imgui::display(particles, "sqrt(particle count)", { 16, 1024 }, 16);
@@ -256,7 +275,9 @@ public:
 		if (need_update) {
 			std::uint32_t psize = std::get<refrakt::uint32_t>(particles)[0];
 
-			auto handle = pool.request(psize, psize, refrakt::texture::format::Float, 3, 2);
+			auto prev_iter = pool.request(psize, psize, refrakt::texture::format::Float, 4, 4);
+			auto cur_iter = pool.request(psize, psize, refrakt::texture::format::Float, 4, 4);
+
 			auto colors = pool.request(psize, psize, refrakt::texture::format::Float, 4, 2);
 
 			auto drawn = pool.request(size.x, size.y, refrakt::texture::format::Float, 4, 4);
@@ -266,13 +287,15 @@ public:
 			refrakt::widget::param_t in, out;
 
 			for (int i = 0; i < iters; i++) {
-				in = refrakt::widget::param_t{ {"pick", pick}, {"len_pow", len_pow}, {"angle_pow", angle_pow}, {"seed", refrakt::float_t{343.245235f * (i + 1)} } };
-				out = refrakt::widget::param_t{ {"position", handle}, {"color", colors} };
+				in = refrakt::widget::param_t{ {"pick", pick}, {"len_pow", len_pow}, {"angle_pow", angle_pow}, {"seed", refrakt::float_t{343.245235f * (i + 1)} }, {"last_iter", prev_iter}, {"warmup", refrakt::int32_t{ (i % 4 == 0) ? 1u : 0u } } };
+				out = refrakt::widget::param_t{ {"position", cur_iter}, {"color", colors} };
 				fern->run(in, out);
 
-				in = { {"pos", handle},{ "col", colors }, {"clear", refrakt::uint32_t{ (i == 0) ? 1u : 0u }} };
+				in = { {"pos", cur_iter},{ "col", colors }, {"clear", refrakt::uint32_t{ (i == 0) ? 1u : 0u }}, {"scale", scale}, {"rot", rot} };
 				out = { { "result", drawn} };
 				part->run(in, out);
+
+				std::swap(cur_iter, prev_iter);
 			}
 			in = refrakt::widget::param_t{ {"tex", refrakt::arg_t{drawn}}, {"max_width", max}, {"alpha", alpha}, {"sig", sigma} };
 			out = refrakt::widget::param_t{ {"result", blurred} };
@@ -317,9 +340,11 @@ private:
 
 	GLuint prog_;
 
+	decltype(spdlog::stderr_color_mt("")) logger;
+
 	refrakt::texture_pool pool;
 	std::unique_ptr<refrakt::widget> part, fern, tone, blur;
-	refrakt::arg_t particles,alpha, max, sigma, exposure, preg, postg, pick, len_pow, angle_pow, seed;
+	refrakt::arg_t particles,alpha, max, sigma, exposure, preg, postg, pick, len_pow, angle_pow, seed, scale, rot;
 	std::int32_t iters;
 
 	refrakt::texture_handle out_tex;

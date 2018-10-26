@@ -2,6 +2,8 @@
 
 #include <variant>
 #include <nlohmann/json.hpp>
+
+#define GLM_FORCE_PURE
 #include <glm/glm.hpp>
 
 #include "texture.hpp"
@@ -89,29 +91,3 @@ namespace refrakt {
 
 	void from_json(const nlohmann::json& j, refrakt::struct_t& s);
 }
-
-/*namespace nlohmann {
-	template <typename... Ts>
-	struct adl_serializer<std::variant<Ts...>> {
-		static void to_json(json& j, const std::variant<Ts...>& opt) {
-			std::visit([&j](auto&& v) {j = v; }, opt);
-		}
-
-		static void from_json(const json& j, std::variant<Ts...>& opt) {
-		if (j.is_null()) {
-		opt = boost::none;
-		}
-		else {
-		opt = j.get<T>(); // same as above, but with
-		// adl_serializer<T>::from_json
-		}
-		}
-	};
-
-	template <>
-	struct adl_serializer<std::map<std::string, refrakt::arg_t>> {
-		static void to_json(json& j, const refrakt::struct_t& s) {
-			for (auto kv : s) j[kv.first + ":" + refrakt::type_string(kv.second)] = kv.second;
-		}
-	};
-}*/

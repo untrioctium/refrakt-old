@@ -81,7 +81,7 @@ namespace refrakt {
 
 		static auto fire(Args... args){
 			if constexpr(detail::has_accumulate<Event>) {
-				typename detail::function_traits<decltype(Event::accumulate)>::arg<0> ret{};
+				typename detail::function_traits<decltype(Event::accumulate)>::template arg<0> ret{};
 				for (auto o : parent::observers())
 					ret.push_back(o->on_notify(typename parent::tag{}, std::forward<Args>(args)...));
 

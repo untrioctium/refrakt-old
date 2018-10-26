@@ -2,8 +2,10 @@
 
 in vec2 pos;
 
-layout(location=0) out vec3 position;
+layout(location=0) out vec4 position;
 layout(location=1) out vec4 color;
+
+uniform sampler2D last_iter;
 
 uniform vec4 pick;
 uniform float angle_pow = 1.0;
@@ -11,6 +13,7 @@ uniform float len_pow = 1.0;
 uniform float hue_offset = 0.0;
 uniform float alpha = 1.0;
 uniform float seed = 0.35235234230;
+uniform int warmup = 0;
 
 float PHI = 1.61803398874989484820459 * 00000.1; // Golden Ratio   
 float PI  = 3.14159265358979323846264 * 00000.1; // PI
@@ -54,39 +57,36 @@ vec3 pickover( vec3 v ) {
 }
 
 void main() {
-	vec3 cur;
-	vec3 prev;
-	vec3 next = vec3( pos * 200 - 100, gold_noise( pos, seed )* 200 - 100);
+	vec3 cur, prev, next;
+	float lcurnext, lprevcur;
 
-	float col = 0.5;
+	if(warmup == 1) {
+		next = vec3( pos * 200 - 100, gold_noise( pos, seed )* 200 - 100);
 
-	for( int i = 0; i < 20; i++ ) {
-		prev = cur;
-		cur = next;
-		next = pickover(cur);
+		for( int i = 0; i < 20; i++ ) {
+			prev = cur;
+			cur = next;
+			next = pickover(cur);
+		}
 
-		float lnext = length(next);
-		col = (col + lnext)/ 2.0;
+		lprevcur = distance(cur, prev);
+	} else {
+		vec4 last = texture(last_iter, pos);
+		cur = last.xyz + vec3(gold_noise( pos, seed )) * .01;
+		next = pickover( last.xyz );
+		lprevcur = last.w;
 	}
 
-	vec3 curnext = next - cur;
-	vec3 prevcur = prev - cur;
-	float lcurnext = length(curnext);
-	float lprevcur = length(prevcur);
+	lcurnext = distance(cur, next);
 	float len = lcurnext + lprevcur;
-	float angle = dot( curnext, prevcur )/(lcurnext * lprevcur);
-	angle = clamp( angle, 0.0, 1.0 );
-	angle = pow(acos(angle)/PI, angle_pow);
-		
 	len = pow( len/(1 + len), len_pow );
 	
 	vec3 hsv;
-	hsv.r = (angle + len)/2;
+	hsv.r = fract(len +  hue_offset);
 	hsv.g = 1 - exp( - hsv.r * hsv.r * 2.5 );
-	hsv.r = fract(pow(col, hsv.r) +  hue_offset);
 	hsv.b = 1;
 	
-	position = next;
+	position = vec4(next, lcurnext);
 	color = vec4(hsvToRGB(hsv), alpha );
 
 }
