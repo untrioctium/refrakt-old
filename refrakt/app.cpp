@@ -16,6 +16,7 @@
 #include <fstream>
 #include <iostream>
 
+#include "log.hpp"
 #include "widget.hpp"
 #include "type_helpers.hpp"
 #include "lua_modules.hpp"
@@ -70,14 +71,9 @@ void APIENTRY glDebugOutput(GLenum source,
 class app {
 public:
 	void init(std::vector<std::string> argc) {
-		logger = spdlog::stdout_color_mt("console");
-		logger->info("Logging started");
+
 		sol::state s;
 		s.open_libraries(sol::lib::base);
-		refrakt::lua::modules::load(s.globals(), "global");
-		refrakt::lua::modules::load(s.globals(), "gl");
-
-		s.script("local what = vec2(1.0); print(what.type);");
 
 		nlohmann::json settings;
 		std::ifstream("settings.json") >> settings;
@@ -121,7 +117,7 @@ public:
 
 	int run() {
 
-		part = refrakt::widget::make("particle_widget");
+		/*part = refrakt::widget::make("particle_widget");
 		part->setup({});
 
 		fern = refrakt::widget::make("glsl_widget");
@@ -153,6 +149,10 @@ public:
 		iters = 64;
 		scale = refrakt::float_t{ 1.0 };
 		rot = refrakt::vec3{ 0.0 };
+		*/
+
+		part = refrakt::widget::make("lua_widget");
+		part->setup({});
 
 		auto window_size = window.getSize();
 
@@ -250,7 +250,7 @@ public:
 
 		ImGui::SFML::Update(window, deltaClock.restart());
 
-		bool need_update = false;
+		/*bool need_update = false;
 
 		auto size = window.getSize();
 		if (!out_tex || out_tex->info().w != size.x || out_tex->info().h != size.y) {
@@ -305,6 +305,13 @@ public:
 			out = refrakt::widget::param_t{ {"result", out_tex} };
 			tone->run(in, out);
 		}
+		*/
+		auto size = window.getSize();
+		auto out_tex = pool.request(size.x, size.y, refrakt::texture::format::Float, 4, 4);
+
+		auto in = refrakt::widget::param_t{};
+		auto out = refrakt::widget::param_t{ {"color", *out_tex} };
+		part->run(in, out);
 
 		show_main_menu();
 		glViewport(0, 0, size.x, size.y);
@@ -339,8 +346,6 @@ private:
 	bool fullscreen;
 
 	GLuint prog_;
-
-	decltype(spdlog::stderr_color_mt("")) logger;
 
 	refrakt::texture_pool pool;
 	std::unique_ptr<refrakt::widget> part, fern, tone, blur;

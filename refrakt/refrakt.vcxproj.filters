@@ -87,6 +87,15 @@
     <ClCompile Include="lua_modules\global\mod_refrakt.cpp">
       <Filter>Source Files\Lua Modules\Global</Filter>
     </ClCompile>
+    <ClCompile Include="lua_modules\gl\mod_gl_buffers.cpp">
+      <Filter>Source Files\Lua Modules\OpenGL</Filter>
+    </ClCompile>
+    <ClCompile Include="log.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Widgets\lua_widget.cpp">
+      <Filter>Source Files\Widgets</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\settings.json">
@@ -140,6 +149,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\lua_modules.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\log.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

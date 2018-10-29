@@ -77,17 +77,17 @@ namespace refrakt {
 		return w * h * channels * bytes_per_channel;
 	}
 
-	auto texture::info() -> const texture::descriptor& {
+	auto texture::info() const -> const texture::descriptor& {
 		return info_;
 	}
 
-	auto texture::handle() -> std::uint32_t {
+	auto texture::handle() const -> std::uint32_t {
 		return handle_;
 	}
 	
-	std::size_t texture::on_notify(events::gl_calc_vram_usage::tag) {
+	/*std::size_t texture::on_notify(events::gl_calc_vram_usage::tag) {
 		return info_.size();
-	}
+	}*/
 	
 	texture_pool::texture_pool() { detail::live_pools().insert(this); }
 	texture_pool::~texture_pool() { detail::live_pools().erase(this); }

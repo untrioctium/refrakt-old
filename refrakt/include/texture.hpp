@@ -8,7 +8,7 @@
 
 namespace refrakt {
 
-	struct texture: public events::gl_calc_vram_usage::observer {
+	struct texture/*: public events::gl_calc_vram_usage::observer*/ {
 		enum class format {
 			Float,
 			SignedInt,
@@ -30,12 +30,13 @@ namespace refrakt {
 			std::size_t size() const;
 		};
 
+		texture() {}
 		texture(descriptor desc, std::uint32_t handle) : handle_(handle), info_(desc) {}
 
-		const descriptor& info();
-		std::uint32_t handle();
+		const descriptor& info() const;
+		std::uint32_t handle() const;
 
-		std::size_t on_notify(events::gl_calc_vram_usage::tag);
+		//std::size_t on_notify(events::gl_calc_vram_usage::tag);
 	private:
 		std::uint32_t handle_;
 		descriptor info_;

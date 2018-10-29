@@ -138,14 +138,17 @@
     <ClCompile Include="app.cpp" />
     <ClCompile Include="global_events.cpp" />
     <ClCompile Include="GLtypes.cpp" />
+    <ClCompile Include="log.cpp" />
     <ClCompile Include="lua_modules.cpp" />
     <ClCompile Include="lua_modules\global\mod_refrakt.cpp" />
     <ClCompile Include="lua_modules\gl\mod_gl_base.cpp" />
+    <ClCompile Include="lua_modules\gl\mod_gl_buffers.cpp" />
     <ClCompile Include="lua_modules\gl\mod_gl_program.cpp" />
     <ClCompile Include="texture.cpp" />
     <ClCompile Include="type_helpers.cpp" />
     <ClCompile Include="widget.cpp" />
     <ClCompile Include="Widgets\glsl_widget.cpp" />
+    <ClCompile Include="Widgets\lua_widget.cpp" />
     <ClCompile Include="widgets\particle_widget.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -164,6 +167,7 @@
     <ClInclude Include="include\factory.hpp" />
     <ClInclude Include="include\global_events.hpp" />
     <ClInclude Include="include\GLtypes.hpp" />
+    <ClInclude Include="include\log.hpp" />
     <ClInclude Include="include\lua_modules.hpp" />
     <ClInclude Include="include\texture.hpp" />
     <ClInclude Include="include\type_helpers.hpp" />

@@ -1,3 +1,4 @@
+#include "log.hpp"
 #include "lua_modules.hpp"
 
 namespace refrakt::lua {
@@ -9,7 +10,7 @@ namespace refrakt::lua {
 	void modules::register_module(const std::string& name, const std::string& parent, const std::string& desc, applicator a) {
 		modules::store()[parent][name] = a;
 
-		std::cout << "Registered " << parent << "." << name << ": " << desc << std::endl;
+		refrakt::log()->info("Registered Lua module {}.{}: {}", parent, name, desc);
 	}
 
 	bool modules::load(sol::table table, std::string name) {
@@ -23,7 +24,12 @@ namespace refrakt::lua {
 
 		if (store().count(mod) == 0) return false;
 
-		sol::table mod_table = (name == "global")? table: ((table[mod].valid()) ? table[mod] : table[mod] = table.create());
+		sol::table mod_table = 
+			name == "global"
+				? table
+				: table[mod].valid()
+					? table[mod]
+					: table[mod] = table.create();
 
 		if (submod.length() == 0) {
 			for (auto& kv : store()[mod]) { kv.second(mod_table); }

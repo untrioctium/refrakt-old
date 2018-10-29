@@ -10,7 +10,7 @@
 #include <glm/gtx/transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/euler_angles.hpp>
-
+/*
 class particle_widget : public refrakt::widget::Registrar<particle_widget>, public refrakt::events::gl_was_reset::observer {
 private:
 	GLuint prog_;
@@ -149,4 +149,4 @@ public:
 
 		glDisable(GL_BLEND);
 	}
-};
+};*/

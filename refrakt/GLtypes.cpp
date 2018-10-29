@@ -18,6 +18,7 @@ namespace /*type_string*/ refrakt {
 	auto type_string(const refrakt::int32_t&) -> const std::string { return "int32"; }
 	auto type_string(const refrakt::uint32_t&) -> const std::string { return "uint32"; }
 	auto type_string(const texture_handle&) -> const std::string { return "texture_handle"; }
+	auto type_string(const texture&) -> const std::string { return "texture"; }
 
 	MAKE_TYPE_STRING_FUNCTION(vec2);
 	MAKE_TYPE_STRING_FUNCTION(dvec2);
@@ -57,7 +58,7 @@ namespace /*type_string*/ refrakt {
 
 namespace /*json*/ refrakt {
 
-	void from_json(const nlohmann::json& j, refrakt::struct_t& s) {
+	/*void from_json(const nlohmann::json& j, refrakt::struct_t& s) {
 		for (nlohmann::json::const_iterator it = j.cbegin(); it != j.cend(); ++it) {
 			const std::size_t colon_location = it.key().find(":");
 			std::string name = it.key().substr(0, colon_location);
@@ -73,5 +74,5 @@ namespace /*json*/ refrakt {
 				}
 			}, s.emplace(name, refrakt::type_helpers::factory(type)).first->second);
 		}
-	}
+	}*/
 }

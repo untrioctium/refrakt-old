@@ -7,7 +7,7 @@
 
 #include "type_helpers.hpp"
 #include "widget.hpp"
-
+/*
 class glsl_widget : 
 	public refrakt::widget::Registrar<glsl_widget>, 
 	public refrakt::events::gl_was_reset::observer {
@@ -131,4 +131,4 @@ public:
 		//draw_buffers = { GL_COLOR_ATTACHMENT0 };
 		//glDrawBuffers(draw_buffers.size(), draw_buffers.data());
 	}
-};
+};*/

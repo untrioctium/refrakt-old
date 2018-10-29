@@ -29,6 +29,13 @@ struct mod_refrakt : refrakt::lua::modules::registrar<mod_refrakt> {
 		apply_vec<refrakt::dvec4>(mod);
 		apply_vec<refrakt::ivec4>(mod);
 		apply_vec<refrakt::uvec4>(mod);
+		
+		mod.new_usertype<refrakt::texture>("texture",
+			"type", sol::property([]() {return "texture"; }),
+			"handle", sol::property(&refrakt::texture::handle),
+			"w", sol::property([](const refrakt::texture& t) {return t.info().w; }),
+			"h", sol::property([](const refrakt::texture& t) {return t.info().h; })
+		);
 	}
 
 	template<typename Base, typename Constructor, typename... Ts>
