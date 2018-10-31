@@ -72,9 +72,6 @@ class app {
 public:
 	void init(std::vector<std::string> argc) {
 
-		sol::state s;
-		s.open_libraries(sol::lib::base);
-
 		nlohmann::json settings;
 		std::ifstream("settings.json") >> settings;
 
@@ -271,23 +268,23 @@ public:
 
 		if (!out_tex || out_tex->info().w != size.x || out_tex->info().h != size.y) {
 			need_update = true;
-			out_tex = pool.request(size.x, size.y, refrakt::texture::format::Float, 4, 2);
+			out_tex = pool.request(static_cast<std::size_t>( size.x ), static_cast<std::size_t>(size.y), refrakt::texture::format::Float, 4, 2);
 		}
 		
 		ImGui::Begin("Parameters");
 		need_update |= ImGui::DragInt("iters", &iters, 1.0f, 1, 64);
-		need_update |= refrakt::type_helpers::imgui::display(pick, "pick", { -2.0, 2.0 }, .01);
-		need_update |= refrakt::type_helpers::imgui::display(scale, "scale", { .1, 5.0 }, .01);
-		need_update |= refrakt::type_helpers::imgui::display(rot, "rot", { -180.0, 180.0 }, 1);
-		need_update |= refrakt::type_helpers::imgui::display(len_pow, "len_pow", { 0.0, 3.0 }, .01);
-		need_update |= refrakt::type_helpers::imgui::display(angle_pow, "angle_pow", { 0.0, 3.0 }, .01);
-		need_update |= refrakt::type_helpers::imgui::display(particles, "sqrt(particle count)", { 16, 1024 }, 16);
-		need_update |= refrakt::type_helpers::imgui::display(max, "max width", { 1, 100 }, 1);
-		need_update |= refrakt::type_helpers::imgui::display(alpha, "alpha", { .01, 10 }, .001);
-		need_update |= refrakt::type_helpers::imgui::display(sigma, "sigma", { .01, 10 }, .001);
-		need_update |= refrakt::type_helpers::imgui::display(exposure, "exposure", { .01, 3 }, .01);
-		need_update |= refrakt::type_helpers::imgui::display(preg, "pre gamma", { .01, 3 }, .01);
-		need_update |= refrakt::type_helpers::imgui::display(postg, "post gamma", { .01, 3 }, .01);
+		need_update |= refrakt::type_helpers::imgui::display(pick, "pick", { -2.0, 2.0 }, .01f);
+		need_update |= refrakt::type_helpers::imgui::display(scale, "scale", { .1, 5.0 }, .01f);
+		need_update |= refrakt::type_helpers::imgui::display(rot, "rot", { -180.0, 180.0 }, 1.0f);
+		need_update |= refrakt::type_helpers::imgui::display(len_pow, "len_pow", { 0.0, 3.0 }, .01f);
+		need_update |= refrakt::type_helpers::imgui::display(angle_pow, "angle_pow", { 0.0, 3.0 }, .01f);
+		need_update |= refrakt::type_helpers::imgui::display(particles, "sqrt(particle count)", { 16, 1024 }, 16.0f);
+		need_update |= refrakt::type_helpers::imgui::display(max, "max width", { 1, 100 }, 1.0f);
+		need_update |= refrakt::type_helpers::imgui::display(alpha, "alpha", { .01, 10 }, .001f);
+		need_update |= refrakt::type_helpers::imgui::display(sigma, "sigma", { .01, 10 }, .001f);
+		need_update |= refrakt::type_helpers::imgui::display(exposure, "exposure", { .01, 3 }, .01f);
+		need_update |= refrakt::type_helpers::imgui::display(preg, "pre gamma", { .01, 3 }, .01f);
+		need_update |= refrakt::type_helpers::imgui::display(postg, "post gamma", { .01, 3 }, .01f);
 		ImGui::End();
 		if (need_update) {
 			std::uint32_t psize = std::get<refrakt::uint32_t>(particles)[0];
@@ -297,9 +294,9 @@ public:
 
 			auto colors = pool.request(psize, psize, refrakt::texture::format::Float, 4, 2);
 
-			auto drawn = pool.request(size.x, size.y, refrakt::texture::format::Float, 4, 4);
-			auto blurred = pool.request(size.x, size.y, refrakt::texture::format::Float, 4, 4);
-			auto toned = pool.request(size.x, size.y, refrakt::texture::format::Float, 4, 4);
+			auto drawn = pool.request(static_cast<std::size_t>(size.x), static_cast<std::size_t>(size.y), refrakt::texture::format::Float, 4, 4);
+			auto blurred = pool.request(static_cast<std::size_t>(size.x), static_cast<std::size_t>(size.y), refrakt::texture::format::Float, 4, 4);
+			auto toned = pool.request(static_cast<std::size_t>(size.x), static_cast<std::size_t>(size.y), refrakt::texture::format::Float, 4, 4);
 
 			refrakt::widget::param_t in, out;
 
@@ -341,7 +338,7 @@ public:
 
 		ImGui::Begin("output");
 		GLuint image = out_tex->handle();
-		ImGui::Image((void*)image, size, ImVec2(0, 1), ImVec2(1,0), ImVec4(1,1,1,1), ImVec4(0,0,0,0));
+		ImGui::Image((void*)std::size_t{ image }, size, ImVec2(0, 1), ImVec2(1, 0), ImVec4(1, 1, 1, 1), ImVec4(0, 0, 0, 0));
 		ImGui::End();
 		
 		window.pushGLStates();

@@ -113,9 +113,9 @@ public:
 			}, kv.second);
 		}
 
-		glViewport(0, 0, smallest.first, smallest.second);
+		glViewport(0, 0, static_cast<GLsizei>(smallest.first), static_cast<GLsizei>(smallest.second));
 		std::sort(draw_buffers.begin(), draw_buffers.end()); //TODO: Something is wrong with my reasoning that this is needed
-		glDrawBuffers(draw_buffers.size(), draw_buffers.data());
+		glDrawBuffers(static_cast<GLsizei>(draw_buffers.size()), draw_buffers.data());
 
 		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 		glUseProgram(0);

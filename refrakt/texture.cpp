@@ -52,7 +52,7 @@ namespace refrakt {
 
 			glBindTexture(GL_TEXTURE_2D, tex);
 			auto& format = format_map.at(std::make_tuple(desc.channels, desc.bytes_per_channel, desc.format));
-			glTexImage2D(GL_TEXTURE_2D, 0, format[0], desc.w, desc.h, 0, format[1], format[2], 0);
+			glTexImage2D(GL_TEXTURE_2D, 0, format[0], static_cast<GLsizei>(desc.w), static_cast<GLsizei>(desc.h), 0, format[1], format[2], 0);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
@@ -147,7 +147,7 @@ namespace refrakt {
 	}
 
 	std::size_t texture_pool::on_notify(events::gl_calc_vram_usage::tag) {
-		return std::accumulate(pool.begin(), pool.end(), 0, [](auto left, auto right) {
+		return std::accumulate(pool.begin(), pool.end(), std::size_t{ 0 }, [](auto left, auto right) {
 			return left + right.first.size() * right.second.size();
 		});
 		//for (auto& sub_pool : pool) count += sub_pool.first.size() * sub_pool.second.size();

@@ -88,7 +88,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)dependencies\lib\glew-2.1.0\include;$(SolutionDir)dependencies\lib\lua\include;$(SolutionDir)dependencies\lib\SFML\include;$(SolutionDir)refrakt\include;$(SolutionDir)dependencies\imgui;$(SolutionDir)dependencies\imgui-sfml;$(SolutionDir)dependencies\json\single_include\;$(SolutionDir)dependencies\sol2\single;$(SolutionDir)dependencies\rtmidi;$(SolutionDir)dependencies\spdlog\include;$(SolutionDir)dependencies\glm</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)dependencies\lib\glew\include;$(SolutionDir)dependencies\lib\lua\include;$(SolutionDir)dependencies\lib\SFML\include;$(SolutionDir)refrakt\include;$(SolutionDir)dependencies\imgui;$(SolutionDir)dependencies\imgui-sfml;$(SolutionDir)dependencies\json\single_include\;$(SolutionDir)dependencies\sol2\single;$(SolutionDir)dependencies\rtmidi;$(SolutionDir)dependencies\spdlog\include;$(SolutionDir)dependencies\glm</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>GLEW_STATIC;SFML_STATIC;__WINDOWS_MM__;_SILENCE_CXX17_ALLOCATOR_VOID_DEPRECATION_WARNING;_SCL_SECURE_NO_WARNINGS;IMGUI_USER_CONFIG="imconfig-SFML.h";%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <EnablePREfast>false</EnablePREfast>
       <LanguageStandard>stdcpp17</LanguageStandard>
@@ -96,8 +96,9 @@
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>$(SolutionDir)dependencies\lib\glew-2.1.0\lib\;$(SolutionDir)dependencies\lib\SFML\lib;$(SolutionDir)dependencies\lib\lua;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>opengl32.lib;glu32.lib;glew32s.lib;sfml-graphics-s-d.lib;sfml-window-s-d.lib;sfml-system-s-d.lib;lua53.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)dependencies\lib\glew\lib\;$(SolutionDir)dependencies\lib\SFML\lib;$(SolutionDir)dependencies\lib\lua;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>opengl32.lib;glu32.lib;glew32sd.lib;sfml-graphics-s-d.lib;sfml-window-s-d.lib;sfml-system-s-d.lib;lua53.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <IgnoreSpecificDefaultLibraries>libcmt.lib</IgnoreSpecificDefaultLibraries>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">

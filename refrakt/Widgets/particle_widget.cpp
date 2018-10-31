@@ -108,8 +108,8 @@ public:
 		glBindFramebuffer(GL_FRAMEBUFFER, fbo_);
 
 		auto v = std::get<refrakt::texture>(input["pos"]);
-		int total_elements = total_elements = v.info().w * v.info().h;
-		glUniform2i(glGetUniformLocation(prog_, "dim"), v.info().w, v.info().h);
+		int total_elements = static_cast<int>(v.info().w * v.info().h);
+		glUniform2i(glGetUniformLocation(prog_, "dim"), static_cast<GLint>(v.info().w), static_cast<GLint>(v.info().h));
 		glUniform1i(glGetUniformLocation(prog_, "pos"), 0);
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, v.handle());
@@ -123,7 +123,7 @@ public:
 		float scale = std::get<refrakt::float_t>(input["scale"])[0];
 		auto rot = std::get<refrakt::vec3>(input["rot"]);
 
-		glm::mat4 projection = glm::perspective(glm::radians(70.0f), float(handle.info().w) / handle.info().h, 0.1f, 100.0f) * glm::lookAt(
+		glm::mat4 projection = glm::perspective(glm::radians(45.0f), float(handle.info().w) / handle.info().h, 0.1f, 100.0f) * glm::lookAt(
 			glm::vec3(0, 0, -3.0), // Camera is at (4,3,3), in World Space
 			glm::vec3(0, 0, 0), // and looks at the origin
 			glm::vec3(0, 1, 0)  // Head is up (set to 0,-1,0 to look upside-down)
@@ -137,7 +137,7 @@ public:
 			glClearColor(0.0, 0.0, 0.0, 0.0);
 			glClear(GL_COLOR_BUFFER_BIT);
 		}
-		glViewport(0, 0, handle.info().w, handle.info().h);
+		glViewport(0, 0, static_cast<GLsizei>(handle.info().w), static_cast<GLsizei>(handle.info().h));
 
 		glDrawArrays(GL_POINTS, 0, total_elements);
 		glUseProgram(0);

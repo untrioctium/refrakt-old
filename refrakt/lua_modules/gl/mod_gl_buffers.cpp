@@ -60,7 +60,7 @@ struct mod_gl_buffers : refrakt::lua::modules::registrar<mod_gl_buffers> {
 			for (int i = 0; buffers[i].valid(); i++) {
 				b.push_back(buffers[i]);
 			}
-			glDrawBuffers(b.size(), b.data());
+			glDrawBuffers(static_cast<GLsizei>(b.size()), b.data());
 		};
 	}
 };
