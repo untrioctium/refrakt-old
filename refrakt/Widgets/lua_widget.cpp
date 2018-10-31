@@ -10,7 +10,7 @@ public:
 		refrakt::lua::modules::load(state.globals(), "global");
 		refrakt::lua::modules::load(state.globals(), "gl");
 		state.open_libraries();
-		state.script_file("widgets/glsl.lua");
+		state.script_file("widgets/base/opengl_fragment.lua");
 		data = state.create_table();
 		sol::table args = state.create_table();
 

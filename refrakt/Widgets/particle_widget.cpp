@@ -10,7 +10,7 @@
 #include <glm/gtx/transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/euler_angles.hpp>
-/*
+
 class particle_widget : public refrakt::widget::Registrar<particle_widget>, public refrakt::events::gl_was_reset::observer {
 private:
 	GLuint prog_;
@@ -98,8 +98,8 @@ public:
 	}
 
 	void run(refrakt::widget::param_t& input, refrakt::widget::param_t& output) const {
-		GLint viewport[4];
-		glGetIntegerv(GL_VIEWPORT, viewport);
+		//GLint viewport[4];
+		//glGetIntegerv(GL_VIEWPORT, viewport);
 
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_ONE, GL_ONE);
@@ -107,25 +107,23 @@ public:
 		glUseProgram(prog_);
 		glBindFramebuffer(GL_FRAMEBUFFER, fbo_);
 
-
-		auto v = std::get<refrakt::texture_handle>(input["pos"]);
-		int total_elements = total_elements = v->info().w * v->info().h;
-		glUniform2i(glGetUniformLocation(prog_, "dim"), v->info().w, v->info().h);
+		auto v = std::get<refrakt::texture>(input["pos"]);
+		int total_elements = total_elements = v.info().w * v.info().h;
+		glUniform2i(glGetUniformLocation(prog_, "dim"), v.info().w, v.info().h);
 		glUniform1i(glGetUniformLocation(prog_, "pos"), 0);
 		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, v->handle());
-	
-		v = std::get<refrakt::texture_handle>(input["col"]);
+		glBindTexture(GL_TEXTURE_2D, v.handle());
+
+		v = std::get<refrakt::texture>(input["col"]);
 		glUniform1i(glGetUniformLocation(prog_, "col"), 1);
 		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, v->handle());
-
-		auto handle = std::get<refrakt::texture_handle>(output["result"]);
+		glBindTexture(GL_TEXTURE_2D, v.handle());
+		auto handle = std::get<refrakt::texture>(output["result"]);
 
 		float scale = std::get<refrakt::float_t>(input["scale"])[0];
 		auto rot = std::get<refrakt::vec3>(input["rot"]);
 
-		glm::mat4 projection = glm::perspective(glm::radians(70.0f), float(handle->info().w) / handle->info().h, 0.1f, 100.0f) * glm::lookAt(
+		glm::mat4 projection = glm::perspective(glm::radians(70.0f), float(handle.info().w) / handle.info().h, 0.1f, 100.0f) * glm::lookAt(
 			glm::vec3(0, 0, -3.0), // Camera is at (4,3,3), in World Space
 			glm::vec3(0, 0, 0), // and looks at the origin
 			glm::vec3(0, 1, 0)  // Head is up (set to 0,-1,0 to look upside-down)
@@ -133,20 +131,26 @@ public:
 
 		glUniformMatrix4fv(glGetUniformLocation(prog_, "view"), 1, false, glm::value_ptr(projection));
 
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, handle->handle(), 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, handle.handle(), 0);
 		glDrawBuffer(GL_COLOR_ATTACHMENT0);
 		if (std::get<refrakt::uint32_t>(input["clear"])[0] == 1) {
 			glClearColor(0.0, 0.0, 0.0, 0.0);
 			glClear(GL_COLOR_BUFFER_BIT);
 		}
-		glViewport(0, 0, handle->info().w, handle->info().h);
+		glViewport(0, 0, handle.info().w, handle.info().h);
 
 		glDrawArrays(GL_POINTS, 0, total_elements);
 		glUseProgram(0);
 
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, 0);
+
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, 0);
+
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-		glViewport(viewport[0], viewport[1], viewport[2], viewport[2]);
+		//glViewport(viewport[0], viewport[1], viewport[2], viewport[2]);
 
 		glDisable(GL_BLEND);
 	}
-};*/
+};

@@ -1,7 +1,7 @@
 widget = {}
 data = {}
 
-widget.name = "glsl"
+widget.name = "opengl_fragment"
 widget.author = "Alex Riley"
 widget.requires = {"gl"}
 widget.is_abstract = true

@@ -107,7 +107,18 @@ public:
 		glewInit();
 
 		window.setActive();
-		ImGui::SFML::Init(window);
+
+		ImGui::SFML::Init(window, false);
+
+		ImGuiIO& io = ImGui::GetIO();
+		io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+
+		ImFontConfig config;
+		config.OversampleH = 8;
+		config.OversampleV = 8;
+		io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\segoeui.ttf", 15, &config);
+		io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\consola.ttf", 13, &config);
+		ImGui::SFML::UpdateFontTexture();
 
 		glEnable(GL_DEBUG_OUTPUT);
 		glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
@@ -117,7 +128,7 @@ public:
 
 	int run() {
 
-		/*part = refrakt::widget::make("particle_widget");
+		part = refrakt::widget::make("particle_widget");
 		part->setup({});
 
 		fern = refrakt::widget::make("glsl_widget");
@@ -143,16 +154,12 @@ public:
 		postg = refrakt::float_t{ 0.89f };
 		particles = refrakt::uint32_t{ 512 };
 		pick = refrakt::vec4{ -2.0f, -0.49f, -0.21f, -1.82f };
-		len_pow = refrakt::float_t{ 6.0f };
+		len_pow = refrakt::float_t{ 1.0f };
 		angle_pow = refrakt::float_t{ 0.17f };
 		seed = refrakt::float_t{ 0.35235234230f };
 		iters = 64;
 		scale = refrakt::float_t{ 1.0 };
 		rot = refrakt::vec3{ 0.0 };
-		*/
-
-		part = refrakt::widget::make("lua_widget");
-		part->setup({});
 
 		auto window_size = window.getSize();
 
@@ -222,6 +229,7 @@ public:
 	}
 
 	bool frame() {
+
 		sf::Event event;
 		while (window.pollEvent(event)) {
 			ImGui::SFML::ProcessEvent(event);
@@ -250,14 +258,23 @@ public:
 
 		ImGui::SFML::Update(window, deltaClock.restart());
 
-		/*bool need_update = false;
+		ImGui::ShowDemoWindow();
 
-		auto size = window.getSize();
+		bool need_update = false;
+
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
+		ImGui::Begin("output", 0, ImGuiWindowFlags_NoScrollbar);
+		auto size = ImGui::GetWindowSize();
+		size.y -= ImGui::GetFontSize() + ImGui::GetStyle().FramePadding.y * 2;
+		ImGui::End();
+		ImGui::PopStyleVar();
+
 		if (!out_tex || out_tex->info().w != size.x || out_tex->info().h != size.y) {
-			need_update |= true;
+			need_update = true;
 			out_tex = pool.request(size.x, size.y, refrakt::texture::format::Float, 4, 2);
 		}
 		
+		ImGui::Begin("Parameters");
 		need_update |= ImGui::DragInt("iters", &iters, 1.0f, 1, 64);
 		need_update |= refrakt::type_helpers::imgui::display(pick, "pick", { -2.0, 2.0 }, .01);
 		need_update |= refrakt::type_helpers::imgui::display(scale, "scale", { .1, 5.0 }, .01);
@@ -271,7 +288,7 @@ public:
 		need_update |= refrakt::type_helpers::imgui::display(exposure, "exposure", { .01, 3 }, .01);
 		need_update |= refrakt::type_helpers::imgui::display(preg, "pre gamma", { .01, 3 }, .01);
 		need_update |= refrakt::type_helpers::imgui::display(postg, "post gamma", { .01, 3 }, .01);
-
+		ImGui::End();
 		if (need_update) {
 			std::uint32_t psize = std::get<refrakt::uint32_t>(particles)[0];
 
@@ -287,45 +304,46 @@ public:
 			refrakt::widget::param_t in, out;
 
 			for (int i = 0; i < iters; i++) {
-				in = refrakt::widget::param_t{ {"pick", pick}, {"len_pow", len_pow}, {"angle_pow", angle_pow}, {"seed", refrakt::float_t{343.245235f * (i + 1)} }, {"last_iter", prev_iter}, {"warmup", refrakt::int32_t{ (i % 4 == 0) ? 1u : 0u } } };
-				out = refrakt::widget::param_t{ {"position", cur_iter}, {"color", colors} };
+				in = refrakt::widget::param_t{ {"pick", pick}, {"len_pow", len_pow}, {"angle_pow", angle_pow}, {"seed", refrakt::float_t{std::sin(343.245235f * (i + 1))} }, {"last_iter", *prev_iter}, {"warmup", refrakt::int32_t{ (i % 4 == 0) ? 1u : 0u } } };
+				out = refrakt::widget::param_t{ {"position", *cur_iter}, {"color", *colors} };
 				fern->run(in, out);
 
-				in = { {"pos", cur_iter},{ "col", colors }, {"clear", refrakt::uint32_t{ (i == 0) ? 1u : 0u }}, {"scale", scale}, {"rot", rot} };
-				out = { { "result", drawn} };
+
+				in = refrakt::widget::param_t{ {"pos", *cur_iter},{ "col", *colors }, {"clear", refrakt::uint32_t{ (i == 0) ? 1u : 0u }}, {"scale", scale}, {"rot", rot} };
+				out = refrakt::widget::param_t{ { "result", *drawn} };
 				part->run(in, out);
 
 				std::swap(cur_iter, prev_iter);
+
 			}
-			in = refrakt::widget::param_t{ {"tex", refrakt::arg_t{drawn}}, {"max_width", max}, {"alpha", alpha}, {"sig", sigma} };
-			out = refrakt::widget::param_t{ {"result", blurred} };
+
+			in = refrakt::widget::param_t{ {"tex", *drawn}, {"max_width", max}, {"alpha", alpha}, {"sig", sigma} };
+			out = refrakt::widget::param_t{ {"result", *blurred} };
 			blur->run(in, out);
 
-			in = refrakt::widget::param_t{ {"col", blurred}, {"exposure", exposure}, {"pre_gamma", preg}, {"post_gamma", postg} };
-			out = refrakt::widget::param_t{ {"result", out_tex} };
+			in = refrakt::widget::param_t{ {"col", *blurred}, {"exposure", exposure}, {"pre_gamma", preg}, {"post_gamma", postg} };
+			out = refrakt::widget::param_t{ {"result", *out_tex} };
 			tone->run(in, out);
 		}
-		*/
-		auto size = window.getSize();
-		auto out_tex = pool.request(size.x, size.y, refrakt::texture::format::Float, 4, 4);
 
-		auto in = refrakt::widget::param_t{};
-		auto out = refrakt::widget::param_t{ {"color", *out_tex} };
-		part->run(in, out);
 
 		show_main_menu();
-		glViewport(0, 0, size.x, size.y);
 		window.clear();
 
-		glUseProgram(prog_);
+		//glUseProgram(prog_);
 
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, out_tex->handle());
-		glUniform1i(glGetUniformLocation(prog_, "tex") , 0);
+		//glActiveTexture(GL_TEXTURE0);
+		//glBindTexture(GL_TEXTURE_2D, out_tex->handle());
+		//glUniform1i(glGetUniformLocation(prog_, "tex") , 0);
 
-		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-		glUseProgram(0);
+		//glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+		//glUseProgram(0);
 
+		ImGui::Begin("output");
+		GLuint image = out_tex->handle();
+		ImGui::Image((void*)image, size, ImVec2(0, 1), ImVec2(1,0), ImVec4(1,1,1,1), ImVec4(0,0,0,0));
+		ImGui::End();
+		
 		window.pushGLStates();
 		window.resetGLStates();
 		ImGui::SFML::Render(window);
@@ -334,7 +352,6 @@ public:
 		window.display();
 
 		refrakt::events::gl_collect_garbage::fire();
-
 		return true;
 	}
 

@@ -7,7 +7,7 @@
 
 #include "type_helpers.hpp"
 #include "widget.hpp"
-/*
+
 class glsl_widget : 
 	public refrakt::widget::Registrar<glsl_widget>, 
 	public refrakt::events::gl_was_reset::observer {
@@ -72,8 +72,8 @@ public:
 
 	void run(refrakt::widget::param_t& input, refrakt::widget::param_t& output) const {
 
-		GLint viewport[4];
-		glGetIntegerv(GL_VIEWPORT, viewport);
+		//GLint viewport[4];
+		//glGetIntegerv(GL_VIEWPORT, viewport);
 
 		glUseProgram(prog_);
 		glBindFramebuffer(GL_FRAMEBUFFER, fbo_);
@@ -85,11 +85,11 @@ public:
 
 				if constexpr(refrakt::is_static_array_v<type>)
 					refrakt::type_helpers::opengl::push(prog_, name, v);
-				else if constexpr(std::is_same_v<type, refrakt::texture_handle>) {
+				else if constexpr(std::is_same_v<type, refrakt::texture>) {
 					GLint location = glGetUniformLocation(prog_, name.c_str());
 					glUniform1i(location, bound_input_textures);
 					glActiveTexture(GL_TEXTURE0 + bound_input_textures);
-					glBindTexture(GL_TEXTURE_2D, v->handle());
+					glBindTexture(GL_TEXTURE_2D, v.handle());
 					bound_input_textures++;
 				}
 
@@ -102,12 +102,12 @@ public:
 			std::visit([name = kv.first, this, &smallest, &draw_buffers](auto&& v){
 				using type = std::decay_t<decltype(v)>;
 
-				if constexpr(std::is_same_v<type, refrakt::texture_handle>) {
-					std::pair<std::size_t, std::size_t> size = { v->info().w, v->info().h };
+				if constexpr(std::is_same_v<type, refrakt::texture>) {
+					std::pair<std::size_t, std::size_t> size = { v.info().w, v.info().h };
 					if (size < smallest) smallest = size;
 
 					GLuint location = glGetFragDataLocation(prog_, name.c_str());
-					glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + location, GL_TEXTURE_2D, v->handle(), 0);
+					glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + location, GL_TEXTURE_2D, v.handle(), 0);
 					draw_buffers.push_back(GL_COLOR_ATTACHMENT0 + location);
 				}
 			}, kv.second);
@@ -121,14 +121,14 @@ public:
 		glUseProgram(0);
 	
 
-		for (int i = 0; i < bound_input_textures; i++) {
-			glActiveTexture(GL_TEXTURE0 + bound_input_textures);
+		for (int i = bound_input_textures - 1; i > 0; i--) {
+			glActiveTexture(GL_TEXTURE0 + i);
 			glBindTexture(GL_TEXTURE_2D, 0);
 		}
 
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-		glViewport(viewport[0], viewport[1], viewport[2], viewport[2]);
+		//glViewport(viewport[0], viewport[1], viewport[2], viewport[2]);
 		//draw_buffers = { GL_COLOR_ATTACHMENT0 };
 		//glDrawBuffers(draw_buffers.size(), draw_buffers.data());
 	}
-};*/
+};

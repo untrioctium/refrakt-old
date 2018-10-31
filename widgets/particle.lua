@@ -80,8 +80,6 @@ function widget.setup(data, args)
 end
 
 function widget.run(data, input, output)
-	local old_viewport = gl.Get(gl.VIEWPORT)
-
 	gl.enable(gl.BLEND)
 	gl.blend_func(gl.ONE, gl.ONE)
 
@@ -118,7 +116,6 @@ function widget.run(data, input, output)
 
 	gl.clear_program()
 	gl.unbind_framebuffer(gl.FRAMEBUFFER)
-	gl.viewport(old_viewport)
 	gl.disable(gl.BLEND)
 end
 

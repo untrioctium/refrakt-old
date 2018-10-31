@@ -31,6 +31,9 @@
     <Filter Include="Source Files\Lua Modules\Global">
       <UniqueIdentifier>{fb0c1ff7-787c-45b8-b798-c856bd92cdf0}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Widgets\Base">
+      <UniqueIdentifier>{e8333d84-bc2b-4542-8a6d-6de2da38976d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="GLtypes.cpp">
@@ -125,8 +128,8 @@
     <None Include="..\widgets\particle.lua">
       <Filter>Widgets</Filter>
     </None>
-    <None Include="..\widgets\glsl.lua">
-      <Filter>Widgets</Filter>
+    <None Include="..\widgets\base\opengl_fragment.lua">
+      <Filter>Widgets\Base</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
