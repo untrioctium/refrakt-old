@@ -36,6 +36,41 @@ struct mod_refrakt : refrakt::lua::modules::registrar<mod_refrakt> {
 			"w", sol::property([](const refrakt::texture& t) {return t.info().w; }),
 			"h", sol::property([](const refrakt::texture& t) {return t.info().h; })
 		);
+
+		mod["mix"] = sol::overload(
+			refrakt::type_helpers::mix<refrakt::float_t>,
+			refrakt::type_helpers::mix<refrakt::double_t>,
+			refrakt::type_helpers::mix<refrakt::vec2>,
+			refrakt::type_helpers::mix<refrakt::dvec2>,
+			refrakt::type_helpers::mix<refrakt::vec3>,
+			refrakt::type_helpers::mix<refrakt::dvec3>,
+			refrakt::type_helpers::mix<refrakt::vec4>,
+			refrakt::type_helpers::mix<refrakt::dvec4>
+		);
+
+		mod["smooth_step"] = [](double x) -> double {
+			if (x <= 0.0) return 0.0;
+			if (x >= 1.0) return 1.0;
+			return -2.0 * x * x * x + 3.0 * x * x;
+		};
+
+		mod["smoother_step"] = [](double x) -> double {
+			if (x <= 0.0) return 0.0;
+			if (x >= 1.0) return 1.0;
+			return 6.0 * std::pow(x, 5) - 15.0 * std::pow(x, 4) + 10.0 * std::pow(x, 3);
+		};
+
+		mod["smoothest_step"] = [](double x) -> double {
+			if (x <= 0.0) return 0.0;
+			if (x >= 1.0) return 1.0;
+			return 924.0 * std::pow(x, 13)
+				- 6006.0 * std::pow(x, 12)
+				+ 16380.0 * std::pow(x, 11)
+				- 24024.0 * std::pow(x, 10)
+				+ 20020.0 * std::pow(x, 9)
+				- 9009.0 * std::pow(x, 8)
+				+ 1716.0 * std::pow(x, 7);
+		};
 	}
 
 	template<typename Base, typename Constructor, typename... Ts>

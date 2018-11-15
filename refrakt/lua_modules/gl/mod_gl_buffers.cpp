@@ -24,6 +24,17 @@ struct mod_gl_buffers : refrakt::lua::modules::registrar<mod_gl_buffers> {
 		}
 	};
 
+	struct vao_wrapper : public refrakt::events::gl_was_reset {
+		GLuint id;
+
+		vao_wrapper() { glGenVertexArrays(1, &id); }
+		~vao_wrapper() { glDeleteVertexArrays(1, &id); }
+
+		void on_notify(refrakt::events::gl_was_reset::tag) {
+			glGenVertexArrays(1, &id);
+		}
+	};
+
 	using fbo_handle = std::shared_ptr<fbo_wrapper>;
 
 	static void apply(sol::table mod) {
@@ -61,6 +72,11 @@ struct mod_gl_buffers : refrakt::lua::modules::registrar<mod_gl_buffers> {
 				b.push_back(buffers[i]);
 			}
 			glDrawBuffers(static_cast<GLsizei>(b.size()), b.data());
+		};
+
+		mod["bind_empty_vao"] = []() {
+			static vao_wrapper empty_vao;
+			glBindVertexArray(empty_vao.id);
 		};
 	}
 };

@@ -127,7 +127,7 @@ public:
 			glm::vec3(0, 0, -3.0), // Camera is at (4,3,3), in World Space
 			glm::vec3(0, 0, 0), // and looks at the origin
 			glm::vec3(0, 1, 0)  // Head is up (set to 0,-1,0 to look upside-down)
-		) * glm::scale(glm::mat4x4(1.0f), glm::vec3(scale)) * glm::eulerAngleYXZ(glm::radians(rot.x), glm::radians(rot.y), glm::radians(rot.z));
+		) * glm::translate(glm::scale(glm::mat4x4(1.0f), glm::vec3(scale)) * glm::eulerAngleYXZ(glm::radians(rot.x), glm::radians(rot.y), glm::radians(rot.z)), std::get<refrakt::vec3>(input["trans"]));
 
 		glUniformMatrix4fv(glGetUniformLocation(prog_, "view"), 1, false, glm::value_ptr(projection));
 

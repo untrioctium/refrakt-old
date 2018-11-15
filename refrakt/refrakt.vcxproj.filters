@@ -63,9 +63,6 @@
     <ClCompile Include="..\dependencies\imgui\imgui_widgets.cpp">
       <Filter>Source Files\Dependencies</Filter>
     </ClCompile>
-    <ClCompile Include="..\dependencies\imgui-sfml\imgui-SFML.cpp">
-      <Filter>Source Files\Dependencies</Filter>
-    </ClCompile>
     <ClCompile Include="..\dependencies\rtmidi\RtMidi.cpp">
       <Filter>Source Files\Dependencies</Filter>
     </ClCompile>
@@ -99,6 +96,12 @@
     <ClCompile Include="Widgets\lua_widget.cpp">
       <Filter>Source Files\Widgets</Filter>
     </ClCompile>
+    <ClCompile Include="..\dependencies\imgui\examples\imgui_impl_glfw.cpp">
+      <Filter>Source Files\Dependencies</Filter>
+    </ClCompile>
+    <ClCompile Include="..\dependencies\imgui\examples\imgui_impl_opengl3.cpp">
+      <Filter>Source Files\Dependencies</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\settings.json">
@@ -130,6 +133,12 @@
     </None>
     <None Include="..\widgets\base\opengl_fragment.lua">
       <Filter>Widgets\Base</Filter>
+    </None>
+    <None Include="..\widgets\escape.frag">
+      <Filter>Widgets</Filter>
+    </None>
+    <None Include="..\widgets\blur.frag">
+      <Filter>Widgets</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

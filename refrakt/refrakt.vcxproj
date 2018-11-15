@@ -88,16 +88,16 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)dependencies\lib\glew\include;$(SolutionDir)dependencies\lib\lua\include;$(SolutionDir)dependencies\lib\SFML\include;$(SolutionDir)refrakt\include;$(SolutionDir)dependencies\imgui;$(SolutionDir)dependencies\imgui-sfml;$(SolutionDir)dependencies\json\single_include\;$(SolutionDir)dependencies\sol2\single;$(SolutionDir)dependencies\rtmidi;$(SolutionDir)dependencies\spdlog\include;$(SolutionDir)dependencies\glm</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>GLEW_STATIC;SFML_STATIC;__WINDOWS_MM__;_SILENCE_CXX17_ALLOCATOR_VOID_DEPRECATION_WARNING;_SCL_SECURE_NO_WARNINGS;IMGUI_USER_CONFIG="imconfig-SFML.h";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(SolutionDir)dependencies\lib\glew\include;$(SolutionDir)dependencies\lib\lua\include;$(SolutionDir)refrakt\include;$(SolutionDir)dependencies\imgui;$(SolutionDir)dependencies\json\single_include\;$(SolutionDir)dependencies\sol2\single;$(SolutionDir)dependencies\rtmidi;$(SolutionDir)dependencies\spdlog\include;$(SolutionDir)dependencies\glm;$(SolutionDir)dependencies\lib\glfw\include;$(SolutionDir)dependencies\stb;$(SolutionDir)dependencies\imgui\examples</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>GLEW_STATIC;IMGUI_IMPL_OPENGL_LOADER_GLEW;__WINDOWS_MM__;_SILENCE_CXX17_ALLOCATOR_VOID_DEPRECATION_WARNING;_SCL_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <EnablePREfast>false</EnablePREfast>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>$(SolutionDir)dependencies\lib\glew\lib\;$(SolutionDir)dependencies\lib\SFML\lib;$(SolutionDir)dependencies\lib\lua;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>opengl32.lib;glu32.lib;glew32sd.lib;sfml-graphics-s-d.lib;sfml-window-s-d.lib;sfml-system-s-d.lib;lua53.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)dependencies\lib\glew\lib\;$(SolutionDir)dependencies\lib\glfw\lib\;$(SolutionDir)dependencies\lib\lua;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>opengl32.lib;glu32.lib;glfw3.lib;glew32sd.lib;lua53.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreSpecificDefaultLibraries>libcmt.lib</IgnoreSpecificDefaultLibraries>
     </Link>
   </ItemDefinitionGroup>
@@ -130,7 +130,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\dependencies\imgui-sfml\imgui-SFML.cpp" />
+    <ClCompile Include="..\dependencies\imgui\examples\imgui_impl_glfw.cpp" />
+    <ClCompile Include="..\dependencies\imgui\examples\imgui_impl_opengl3.cpp" />
     <ClCompile Include="..\dependencies\imgui\imgui.cpp" />
     <ClCompile Include="..\dependencies\imgui\imgui_demo.cpp" />
     <ClCompile Include="..\dependencies\imgui\imgui_draw.cpp" />
@@ -155,7 +156,9 @@
   <ItemGroup>
     <None Include="..\settings.json" />
     <None Include="..\widgets\base\opengl_fragment.lua" />
+    <None Include="..\widgets\blur.frag" />
     <None Include="..\widgets\density.frag" />
+    <None Include="..\widgets\escape.frag" />
     <None Include="..\widgets\fern.frag" />
     <None Include="..\widgets\gradient.frag" />
     <None Include="..\widgets\invert.frag" />

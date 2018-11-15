@@ -1,13 +1,8 @@
 #include <imgui.h>
-#include <imgui-SFML.h>
+#include <imgui_internal.h>
+#include <imgui_impl_glfw.h>
+#include <imgui_impl_opengl3.h>
 #include <GL/glew.h>
-#include <SFML/Graphics/RenderWindow.hpp>
-#include <SFML/Graphics/Sprite.hpp>
-#include <SFML/System/Clock.hpp>
-#include <SFML/Window/Event.hpp>
-#include <SFML/Graphics/RenderTexture.hpp>
-#include <Windows.h>
-#include <chrono>
 
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
@@ -16,10 +11,23 @@
 #include <fstream>
 #include <iostream>
 
+#include <GLFW/glfw3.h>
+
 #include "log.hpp"
 #include "widget.hpp"
 #include "type_helpers.hpp"
 #include "lua_modules.hpp"
+
+#include <cmath>
+
+#pragma warning(disable:4996)
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include <stb_image_write.h>
+#pragma warning(enable:4996)
+
+void glfw_error(int error, const char* desc) {
+	refrakt::log()->critical(desc);
+}
 
 void APIENTRY glDebugOutput(GLenum source,
 	GLenum type,
@@ -70,42 +78,38 @@ void APIENTRY glDebugOutput(GLenum source,
 
 class app {
 public:
-	void init(std::vector<std::string> argc) {
+	bool init(std::vector<std::string> argc) {
+
+		glfwSetErrorCallback(glfw_error);
 
 		nlohmann::json settings;
 		std::ifstream("settings.json") >> settings;
 
-		screen_info = sf::VideoMode{
-			settings.value<unsigned int>("width", 1280),
-			settings.value<unsigned int>("height", 720)
-		};
+		if(!glfwInit()) return false;
+		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+		glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+		glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 
-		ctx = sf::ContextSettings(
-				settings.value("/ogl/depth_buffer_bits"_json_pointer, 24), // depth buffer bits
-				settings.value("/ogl/stencil_buffer_bits"_json_pointer, 8), // stencil buffer bits
-				settings.value("/ogl/antialiasing"_json_pointer, 0), // antialiasing level
-				4, // OpenGL major version
-				3, // OpenGL minor version
-				sf::ContextSettings::Attribute::Debug
+		window = glfwCreateWindow(
+			settings.value<int>("width", 1280),
+			settings.value<int>("height", 720),
+			"Refrakt", NULL, NULL
 		);
 
-		bool fullscreen = settings.value("fullscreen", false);
+		if (!window) return false;
 
-		window.create(
-			screen_info,
-			"refrakt",
-			fullscreen? sf::Style::Fullscreen: sf::Style::Default,
-			ctx
-		);
-
-		window.setFramerateLimit(settings.value<unsigned int>("framerate", 60));
+		glfwMakeContextCurrent(window);
+		glfwSwapInterval(0);
 
 		glewExperimental = true;
 		glewInit();
 
-		window.setActive();
+		IMGUI_CHECKVERSION();
+		ImGui::CreateContext();
 
-		ImGui::SFML::Init(window, false);
+		ImGui_ImplGlfw_InitForOpenGL(window, true);
+		ImGui_ImplOpenGL3_Init();
 
 		ImGuiIO& io = ImGui::GetIO();
 		io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
@@ -115,55 +119,69 @@ public:
 		config.OversampleV = 8;
 		io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\segoeui.ttf", 15, &config);
 		io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\consola.ttf", 13, &config);
-		ImGui::SFML::UpdateFontTexture();
 
 		glEnable(GL_DEBUG_OUTPUT);
 		glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 		glDebugMessageCallback(glDebugOutput, nullptr);
 		glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
+
+		return true;
 	}
 
 	int run() {
 
-		part = refrakt::widget::make("particle_widget");
-		part->setup({});
-
-		fern = refrakt::widget::make("glsl_widget");
-		fern->setup({
-			{"widget", {{"source", "pickover.frag"}}}
+		escape = refrakt::widget::make("glsl_widget");
+		escape->setup({
+			{"widget", {{"source", "escape.frag"}}}
 		});
-
-		tone = refrakt::widget::make("glsl_widget");
-		tone->setup({
-			{ "widget",{ { "source", "tone.frag" } } }
-			});
 
 		blur = refrakt::widget::make("glsl_widget");
 		blur->setup({
-			{ "widget",{ { "source", "density.frag" } } }
-		});
-
-		alpha = refrakt::float_t{ 1.085f };
-		max = refrakt::uint32_t{ 16 };
-		sigma = refrakt::float_t{ 0.758f };
-		exposure = refrakt::float_t{ 0.05f };
-		preg = refrakt::float_t{ 1.22f };
-		postg = refrakt::float_t{ 0.89f };
-		particles = refrakt::uint32_t{ 512 };
-		pick = refrakt::vec4{ -2.0f, -0.49f, -0.21f, -1.82f };
-		len_pow = refrakt::float_t{ 1.0f };
-		angle_pow = refrakt::float_t{ 0.17f };
-		seed = refrakt::float_t{ 0.35235234230f };
-		iters = 64;
-		scale = refrakt::float_t{ 1.0 };
-		rot = refrakt::vec3{ 0.0 };
-
-		auto window_size = window.getSize();
+			{"widget", {{"source", "blur.frag"}}}
+			});
 
 		setup_quad_drawer();
 
+		GLuint vao;
+		glGenVertexArrays(1, &vao);
+		glBindVertexArray(vao);
+
+		refrakt::lua::modules::load(animator.globals(), "global");
+		animator.open_libraries(sol::lib::math, sol::lib::base);
+		animator["center"] = refrakt::vec2{ 0.0f, 0.0f };
+		animator["scale"] = refrakt::float_t{ 6.25f };
+		animator["rotation"] = refrakt::float_t{ 60.0f };
+		animator["hue_shift"] = refrakt::float_t{ 0.341500 };
+		animator["hue_stretch"] = refrakt::float_t{ 1.0f };
+		animator["exponent"] = refrakt::vec2{ 2, 0 };
+		animator["escape_radius"] = refrakt::float_t{ 16 };
+		animator["max_iterations"] = refrakt::uint32_t{ 17 };
+		animator["julia"] = refrakt::vec2{ 1.0, 1.0 };
+		animator["julia_c"] = refrakt::vec2{ 0.325000, -0.710000 };
+		animator["burning_ship"] = refrakt::vec2{ 1.0, 1.0 };
+		animator["hq_mode"] = refrakt::uint32_t{ 0 };
+		animator["time"] = refrakt::float_t{ 0.0 };
+		animator["gamma"] = refrakt::float_t{ 1.0 };
+		animator["sat_mod"] = refrakt::float_t{ 1.0 };
+		animator["hue_mod"] = refrakt::float_t{ 0.0 };
+		animator["val_mod"] = refrakt::float_t{ 0.0 };
+		animator["cloud_octaves"] = refrakt::uint32_t{ 6 };
+
+		animator.script("function animate(t) end");
+
+		stbi_flip_vertically_on_write(true);
+		stbi_write_png_compression_level = 1;
+
+		last_time = glfwGetTime();
 		while (frame()) {}
-		window.close();
+		
+		ImGui_ImplOpenGL3_Shutdown();
+		ImGui_ImplGlfw_Shutdown();
+		ImGui::DestroyContext();
+
+		glfwDestroyWindow(window);
+		glfwTerminate();
+
 		return 0;
 	}
 
@@ -214,20 +232,134 @@ public:
 
 	void show_main_menu() {
 		if (ImGui::BeginMainMenuBar()) {
-			static sf::Clock fpsCounter;
-			static float fpsAvg = 0.0;
-			int lastTime = fpsCounter.restart().asMilliseconds();
-			fpsAvg = .9f * fpsAvg + 100.0f / float((lastTime == 0) ? 1 : lastTime);
 
-			ImGui::Text("Press ~ to hide guis. Press F1 to toggle fullscreen. (%.3f MB VRAM) (%.0f FPS)", refrakt::events::gl_calc_vram_usage::fire() / 1048576.0, fpsAvg);
+			ImGui::Text("Press ~ to hide guis. Press F1 to toggle fullscreen. (%.3f MB VRAM) (%.0f FPS)", 
+				refrakt::events::gl_calc_vram_usage::fire() / 1048576.0, ImGui::GetIO().Framerate);
 
 			ImGui::EndMainMenuBar();
 		}
 	}
 
+	int fixed_step = false;
+	double time_step = 1.0 / 24.0;
+	bool paused = true;
+	double time = 0;
+	bool need_update = true;
+	double last_time;
+	bool tss = false;
+
+	std::array<char, 1024 * 16> animator_script = { '\0' };
+
+	void animation_window() {
+		ImGui::Begin("Animation");
+
+		ImGui::LabelText("##current_time", "Current time: %.5f secs", time);
+		ImGui::Text("Time Step: "); ImGui::SameLine();
+		ImGui::RadioButton("Dynamic", &fixed_step, false); ImGui::SameLine();
+		ImGui::RadioButton("Fixed", &fixed_step, true); ImGui::SameLine();
+
+		if (!fixed_step)
+		{
+			ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+			ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+		}
+		ImGui::InputDouble("##timestep", &time_step, .01, .1, "%.10f");
+		ImGui::SameLine();
+		need_update |= ImGui::Checkbox("TSS (3 frames)", &tss);
+		if (!fixed_step)
+		{
+			ImGui::PopItemFlag();
+			ImGui::PopStyleVar();
+		}
+
+		static double new_time = 0.0;
+
+		if (ImGui::Button((std::string(paused ? "Resume" : "Pause ") + "##pause").c_str())) { paused ^= true;} ImGui::SameLine();
+		if (ImGui::Button("Reset to zero.")) { time = 0; need_update = true; }; ImGui::SameLine();
+		if (ImGui::Button("Set to: ")) { time = new_time; need_update = true; } ImGui::SameLine();
+
+		ImGui::InputDouble("##newtime", &new_time, .01, .1, "%.10f");
+		ImGui::Separator();
+		ImGui::Text("Animator");
+		
+		ImGui::PushFont(ImGui::GetIO().Fonts->Fonts[1]);
+		ImGui::InputTextMultiline("##animator", animator_script.data(), sizeof(animator_script), { -1.0f, ImGui::GetTextLineHeight() * 16 }, ImGuiInputTextFlags_AllowTabInput);
+		ImGui::PopFont();
+		if (ImGui::Button("Update Animator")) {
+			try {
+				animator.safe_script("function animate(t)\n" + std::string(animator_script.data()) + "\nend");
+			}
+			catch (sol::error e) {
+				refrakt::log()->critical(e.what());
+				animator.script("function animate(t) end");
+			}
+			need_update = true;
+		}
+
+		ImGui::End();
+	}
+
+	void save_tex(std::string filepath, refrakt::texture_handle tex) {
+		std::size_t total_size = tex->info().w * tex->info().h * tex->info().channels;
+		std::vector<std::uint8_t> bytes;
+		bytes.resize(total_size);
+		glGetTextureImage(tex->handle(), 0, GL_RGBA, GL_UNSIGNED_BYTE, total_size, bytes.data());
+		stbi_flip_vertically_on_write(true);
+		stbi_write_png(filepath.c_str(), tex->info().w, tex->info().h, 4, bytes.data(), tex->info().w * 4);
+	}
+
+	int captured_frames = 0;
+	bool capturing = false;
+	char capture_path[256] = ".";
+
+	void capture_window() {
+		ImGui::Begin("Frame Capture");
+		ImGui::LabelText("##captured", "Captured %d frames", captured_frames);
+		if (ImGui::Button((std::string(capturing ? "Stop" : "Start") + " capture##togglecapture").c_str())) {
+			if (capturing) captured_frames = 0;
+			capturing ^= true;
+		}
+		ImGui::InputText("Capture path", capture_path, 256);
+		ImGui::End();
+	}
+
+	void render(double t, refrakt::texture_handle tex) {
+		if( !paused ) animator["animate"](t);
+
+		refrakt::widget::param_t in{
+			{ "center", animator["center"].get<refrakt::vec2>() },
+			{ "scale", animator["scale"].get<refrakt::float_t>() },
+			{ "rotation", animator["rotation"].get<refrakt::float_t>() },
+			{ "hue_shift", animator["hue_shift"].get<refrakt::float_t>() },
+			{ "hue_stretch", animator["hue_stretch"].get<refrakt::float_t>() },
+			{ "exponent", animator["exponent"].get<refrakt::vec2>() },
+			{ "escape_radius", animator["escape_radius"].get<refrakt::float_t>() },
+			{ "max_iterations", animator["max_iterations"].get<refrakt::uint32_t>() },
+			{ "julia", animator["julia"].get<refrakt::vec2>() },
+			{ "julia_c", animator["julia_c"].get<refrakt::vec2>() },
+			{ "burning_ship", animator["burning_ship"].get<refrakt::vec2>() },
+			{ "hq_mode", animator["hq_mode"].get<refrakt::uint32_t>() },
+			{ "surface_ratio", refrakt::float_t{float(tex->info().w) / tex->info().h } },
+			{ "offset", refrakt::vec2{1.0 / tex->info().w, 1.0/ tex->info().h  }},
+			{ "time", animator["time"].get<refrakt::float_t>() },
+			{ "gamma", animator["gamma"].get<refrakt::float_t>() },
+			{ "sat_mod", animator["sat_mod"].get<refrakt::float_t>() },
+			{ "hue_mod", animator["hue_mod"].get<refrakt::float_t>() },
+			{ "val_mod", animator["val_mod"].get<refrakt::float_t>() },
+			{ "cloud_octaves", animator["cloud_octaves"].get<refrakt::uint32_t>() }
+		};
+
+		refrakt::widget::param_t out{
+			{"color", *tex}
+		};
+
+		escape->run(in, out);
+		glFinish();
+	}
+
 	bool frame() {
 
-		sf::Event event;
+		/*sf::Event event;
 		while (window.pollEvent(event)) {
 			ImGui::SFML::ProcessEvent(event);
 
@@ -251,18 +383,36 @@ public:
 				fullscreen ^= true;
 				refrakt::events::gl_was_reset::fire();
 			}
-		}
+		}*/
 
-		ImGui::SFML::Update(window, deltaClock.restart());
+		need_update = false;
+
+		glfwPollEvents();
+		ImGui_ImplOpenGL3_NewFrame();
+		ImGui_ImplGlfw_NewFrame();
+		ImGui::NewFrame();
 
 		ImGui::ShowDemoWindow();
+		animation_window();
+		capture_window();
 
-		bool need_update = false;
+		float frame_height = ImGui::GetFontSize() + ImGui::GetStyle().FramePadding.y * 2;
+
+		ImGui::Begin("Output Window Options");
+		if (ImGui::Button("Size to 480p")) ImGui::SetNextWindowSize({ 854, 480 + frame_height });
+		ImGui::SameLine();
+		if (ImGui::Button("Size to 720p")) ImGui::SetNextWindowSize({ 1280, 720 + frame_height });
+		ImGui::SameLine();
+		if (ImGui::Button("Size to 1080p")) ImGui::SetNextWindowSize({ 1920, 1080 + frame_height });
+		if (ImGui::Button("Save as screenshot.png")) {
+			save_tex("screenshot.png", out_tex);
+		}
+		ImGui::End();
 
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
 		ImGui::Begin("output", 0, ImGuiWindowFlags_NoScrollbar);
 		auto size = ImGui::GetWindowSize();
-		size.y -= ImGui::GetFontSize() + ImGui::GetStyle().FramePadding.y * 2;
+		size.y -= frame_height;
 		ImGui::End();
 		ImGui::PopStyleVar();
 
@@ -270,62 +420,93 @@ public:
 			need_update = true;
 			out_tex = pool.request(static_cast<std::size_t>( size.x ), static_cast<std::size_t>(size.y), refrakt::texture::format::Float, 4, 2);
 		}
-		
+		auto now = glfwGetTime();
+		if (!paused || need_update) {
+
+			time += (fixed_step) ? time_step : now - last_time;
+			need_update = true;
+		}
+		last_time = now;
+
+		auto& center = animator["center"].get<refrakt::vec2>();
+		auto& scale = animator["scale"].get<refrakt::float_t>();
+		auto& rot = animator["rotation"].get<refrakt::float_t>();
+		auto& exp = animator["exponent"].get<refrakt::vec2>();
+		auto& jul = animator["julia_c"].get<refrakt::vec2>();
+
 		ImGui::Begin("Parameters");
-		need_update |= ImGui::DragInt("iters", &iters, 1.0f, 1, 64);
-		need_update |= refrakt::type_helpers::imgui::display(pick, "pick", { -2.0, 2.0 }, .01f);
-		need_update |= refrakt::type_helpers::imgui::display(scale, "scale", { .1, 5.0 }, .01f);
-		need_update |= refrakt::type_helpers::imgui::display(rot, "rot", { -180.0, 180.0 }, 1.0f);
-		need_update |= refrakt::type_helpers::imgui::display(len_pow, "len_pow", { 0.0, 3.0 }, .01f);
-		need_update |= refrakt::type_helpers::imgui::display(angle_pow, "angle_pow", { 0.0, 3.0 }, .01f);
-		need_update |= refrakt::type_helpers::imgui::display(particles, "sqrt(particle count)", { 16, 1024 }, 16.0f);
-		need_update |= refrakt::type_helpers::imgui::display(max, "max width", { 1, 100 }, 1.0f);
-		need_update |= refrakt::type_helpers::imgui::display(alpha, "alpha", { .01, 10 }, .001f);
-		need_update |= refrakt::type_helpers::imgui::display(sigma, "sigma", { .01, 10 }, .001f);
-		need_update |= refrakt::type_helpers::imgui::display(exposure, "exposure", { .01, 3 }, .01f);
-		need_update |= refrakt::type_helpers::imgui::display(preg, "pre gamma", { .01, 3 }, .01f);
-		need_update |= refrakt::type_helpers::imgui::display(postg, "post gamma", { .01, 3 }, .01f);
+		need_update |= refrakt::type_helpers::imgui::display(center, "center", refrakt::dvec2{ -5.0, 5.0 }, .001);
+		need_update |= refrakt::type_helpers::imgui::display(scale, "scale", refrakt::dvec2{ .5, 1000.0 }, .05);
+		need_update |= refrakt::type_helpers::imgui::display(rot, "rotation", refrakt::dvec2{ -360, 360 }, .05);
+		need_update |= refrakt::type_helpers::imgui::display(animator["hue_shift"].get<refrakt::float_t>(), "hue_shift", refrakt::dvec2{ 0, 1 }, .0001);
+		need_update |= refrakt::type_helpers::imgui::display(animator["hue_stretch"].get<refrakt::float_t>(), "hue_stretch", refrakt::dvec2{ 0, 4 }, .001);
+		need_update |= refrakt::type_helpers::imgui::display(exp, "exponent", refrakt::dvec2{ -4.0, 4.0 }, .001);
+		need_update |= refrakt::type_helpers::imgui::display(animator["escape_radius"].get<refrakt::float_t>(), "escape_radius", refrakt::dvec2{ 0, 100.0 }, .001);
+		need_update |= refrakt::type_helpers::imgui::display(animator["max_iterations"].get<refrakt::uint32_t>(), "escape", refrakt::dvec2{ 0, 1000.0 }, 1);
+		need_update |= refrakt::type_helpers::imgui::display(animator["julia"].get<refrakt::vec2>(), "julia", refrakt::dvec2{ 0, 1 }, 1);
+		need_update |= refrakt::type_helpers::imgui::display(jul, "julia_c", refrakt::dvec2{ -2, 2 }, .005);
+		need_update |= refrakt::type_helpers::imgui::display(animator["burning_ship"].get<refrakt::vec2>(), "burning_ship", refrakt::dvec2{ 0, 1 }, 1);
+		need_update |= refrakt::type_helpers::imgui::display(animator["hq_mode"].get<refrakt::uint32_t>(), "hq_mode", refrakt::dvec2{ 0, 1 }, 1);
+		need_update |= refrakt::type_helpers::imgui::display(animator["gamma"].get<refrakt::float_t>(), "gamma", refrakt::dvec2{ 0, 3 }, .0001);
+		need_update |= refrakt::type_helpers::imgui::display(animator["sat_mod"].get<refrakt::float_t>(), "sat_mod", refrakt::dvec2{ 0, 1 }, .001);
+		need_update |= refrakt::type_helpers::imgui::display(animator["val_mod"].get<refrakt::float_t>(), "val_mod", refrakt::dvec2{ 0, 1 }, .001);
+		need_update |= refrakt::type_helpers::imgui::display(animator["hue_mod"].get<refrakt::float_t>(), "hue_mod", refrakt::dvec2{ 0, 1 }, .001);
+		need_update |= refrakt::type_helpers::imgui::display(animator["cloud_octaves"].get<refrakt::uint32_t>(), "cloud_octaves", refrakt::dvec2{ 0, 24 }, 1);
+		need_update |= refrakt::type_helpers::imgui::display(animator["time"].get<refrakt::float_t>(), "time", refrakt::dvec2{ 0, 100000 }, 1);
+
+		std::string table;
+		std::string osc;
+		std::string temp;
+		temp = "center = vec2(" + std::to_string(center.x) + ", " + std::to_string(center.y) + ")";
+		table += "\t\t" + temp + ",\n";
+		osc += "\t\t\t{" + temp + ", 1},\n";
+
+		temp = "scale = float(" + std::to_string(scale.x) + ")";
+		table += "\t\t" + temp + ",\n";
+		osc += "\t\t\t{" + temp + ", 1},\n";
+
+		temp = "rotation = float(" + std::to_string(rot.x) + ")";
+		table += "\t\t" + temp + ",\n";
+		osc += "\t\t\t{" + temp + ", 1},\n";
+
+		temp = "exponent = vec2(" + std::to_string(exp.x) + ", " + std::to_string(exp.y) + ")";
+		table += "\t\t" + temp + ",\n";
+		osc += "\t\t\t{" + temp + ", 1},\n";
+
+		temp = "julia_c = vec2(" + std::to_string(jul.x) + ", " + std::to_string(jul.y) + ")";
+		table += "\t\t" + temp + ",\n";
+		osc += "\t\t\t{" + temp + ", 1}\n";
+
+		table += "\t\tosc = {\n\t\t}\n";
+		table = "\t{\n" + table + "\t}";
+
+		ImGui::InputTextMultiline("Table", table.data(), table.size(), ImVec2(0, 0), ImGuiInputTextFlags_ReadOnly);
+
 		ImGui::End();
 		if (need_update) {
-			std::uint32_t psize = std::get<refrakt::uint32_t>(particles)[0];
-
-			auto prev_iter = pool.request(psize, psize, refrakt::texture::format::Float, 4, 4);
-			auto cur_iter = pool.request(psize, psize, refrakt::texture::format::Float, 4, 4);
-
-			auto colors = pool.request(psize, psize, refrakt::texture::format::Float, 4, 2);
-
-			auto drawn = pool.request(static_cast<std::size_t>(size.x), static_cast<std::size_t>(size.y), refrakt::texture::format::Float, 4, 4);
-			auto blurred = pool.request(static_cast<std::size_t>(size.x), static_cast<std::size_t>(size.y), refrakt::texture::format::Float, 4, 4);
-			auto toned = pool.request(static_cast<std::size_t>(size.x), static_cast<std::size_t>(size.y), refrakt::texture::format::Float, 4, 4);
-
-			refrakt::widget::param_t in, out;
-
-			for (int i = 0; i < iters; i++) {
-				in = refrakt::widget::param_t{ {"pick", pick}, {"len_pow", len_pow}, {"angle_pow", angle_pow}, {"seed", refrakt::float_t{std::sin(343.245235f * (i + 1))} }, {"last_iter", *prev_iter}, {"warmup", refrakt::int32_t{ (i % 4 == 0) ? 1u : 0u } } };
-				out = refrakt::widget::param_t{ {"position", *cur_iter}, {"color", *colors} };
-				fern->run(in, out);
 
 
-				in = refrakt::widget::param_t{ {"pos", *cur_iter},{ "col", *colors }, {"clear", refrakt::uint32_t{ (i == 0) ? 1u : 0u }}, {"scale", scale}, {"rot", rot} };
-				out = refrakt::widget::param_t{ { "result", *drawn} };
-				part->run(in, out);
+			if (tss && fixed_step) {
+				auto prev = pool.request(static_cast<std::size_t>(size.x), static_cast<std::size_t>(size.y), refrakt::texture::format::Float, 4, 2);
+				render(time - time_step, prev);
 
-				std::swap(cur_iter, prev_iter);
+				auto cur = pool.request(static_cast<std::size_t>(size.x), static_cast<std::size_t>(size.y), refrakt::texture::format::Float, 4, 2);
+				render(time, cur);
 
-			}
+				auto next = pool.request(static_cast<std::size_t>(size.x), static_cast<std::size_t>(size.y), refrakt::texture::format::Float, 4, 2);
+				render(time + time_step, next);
 
-			in = refrakt::widget::param_t{ {"tex", *drawn}, {"max_width", max}, {"alpha", alpha}, {"sig", sigma} };
-			out = refrakt::widget::param_t{ {"result", *blurred} };
-			blur->run(in, out);
+				refrakt::widget::param_t in{ {"in1", *prev},{"in2", *cur} ,{"in3", *next} };
+				refrakt::widget::param_t out{ {"color", *out_tex} };
+				blur->run(in, out);
 
-			in = refrakt::widget::param_t{ {"col", *blurred}, {"exposure", exposure}, {"pre_gamma", preg}, {"post_gamma", postg} };
-			out = refrakt::widget::param_t{ {"result", *out_tex} };
-			tone->run(in, out);
+
+			} else 	render(time, out_tex);
 		}
 
+		//glfwMakeContextCurrent(window);
 
 		show_main_menu();
-		window.clear();
 
 		//glUseProgram(prog_);
 
@@ -341,30 +522,50 @@ public:
 		ImGui::Image((void*)std::size_t{ image }, size, ImVec2(0, 1), ImVec2(1, 0), ImVec4(1, 1, 1, 1), ImVec4(0, 0, 0, 0));
 		ImGui::End();
 		
-		window.pushGLStates();
-		window.resetGLStates();
-		ImGui::SFML::Render(window);
-		window.popGLStates();
+		ImGui::Render();
+		int display_w, display_h;
+		//glfwMakeContextCurrent(window);
+		glfwGetFramebufferSize(window, &display_w, &display_h);
+		glViewport(0, 0, display_w, display_h);
+		glClearColor(0.0, 0.0, 0.0, 1.0);
+		glClear(GL_COLOR_BUFFER_BIT);
+		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
-		window.display();
+		glfwMakeContextCurrent(window);
+		glfwSwapBuffers(window);
+
+		if (!paused && capturing) {
+			captured_frames++;
+			char filename[64];
+			sprintf_s(filename, "frame%05d.png", captured_frames);
+			std::string final_path = capture_path + std::string("\\") + filename;
+			std::size_t total_size = out_tex->info().w * out_tex->info().h * out_tex->info().channels;
+			std::vector<std::uint8_t> bytes;
+			bytes.resize(total_size);
+			glMemoryBarrier(GL_ALL_BARRIER_BITS);
+			glGetTextureImage(out_tex->handle(), 0, GL_RGBA, GL_UNSIGNED_BYTE, total_size, bytes.data());
+			refrakt::log()->info("Writing {}: {}x{} ({} MB)", final_path,
+				out_tex->info().w, out_tex->info().h, total_size / (1024.0 * 1024.0));
+			// unquestionably eventually causes resource exhausation if frame generation time < image write time
+			std::thread([tex = *out_tex, path = final_path, d = bytes]() {
+				stbi_write_png(path.c_str(), tex.info().w, tex.info().h, 4, d.data(), tex.info().w * 4);
+			}).detach();
+		}
 
 		refrakt::events::gl_collect_garbage::fire();
-		return true;
+		return !glfwWindowShouldClose(window);
 	}
 
 private:
-	sf::RenderWindow window;
-	sf::Clock deltaClock;
-	sf::ContextSettings ctx;
-	sf::VideoMode screen_info;
+	GLFWwindow* window;
 	bool fullscreen;
 
 	GLuint prog_;
 
 	refrakt::texture_pool pool;
-	std::unique_ptr<refrakt::widget> part, fern, tone, blur;
-	refrakt::arg_t particles,alpha, max, sigma, exposure, preg, postg, pick, len_pow, angle_pow, seed, scale, rot;
-	std::int32_t iters;
+	std::unique_ptr<refrakt::widget> escape, blur;
+
+	sol::state animator;
 
 	refrakt::texture_handle out_tex;
 
@@ -375,6 +576,10 @@ int main(int argc, char** argv) {
 	for (int i = 0; i < argc; i++) arg.push_back(argv[i]);
 
 	app rfkt;
-	rfkt.init(arg);
+	if (!rfkt.init(arg)) {
+		refrakt::log()->critical("Initialization failed.");
+		std::cin.get();
+		return 1;
+	}
 	return rfkt.run();
 }
