@@ -55,7 +55,7 @@ function widget.run(input, output)
 		end
 	end
 
-	local smallest = uvec2(100000)
+	local smallest = uvec2(10000000) -- larger than any conceivable OGL texture
 	local draw_buffers = {}
 
 	for name, arg in pairs(output) do

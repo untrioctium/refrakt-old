@@ -169,6 +169,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\factory.hpp" />
+    <ClInclude Include="include\fixed_vector.hpp" />
     <ClInclude Include="include\global_events.hpp" />
     <ClInclude Include="include\GLtypes.hpp" />
     <ClInclude Include="include\log.hpp" />

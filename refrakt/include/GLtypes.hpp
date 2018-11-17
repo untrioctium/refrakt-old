@@ -7,27 +7,60 @@
 #include <glm/glm.hpp>
 
 #include "texture.hpp"
+#include "fixed_vector.hpp"
 
 namespace refrakt {
 
-	template<typename T> struct is_static_array {
-	private:
-		template<std::size_t S, typename U, glm::qualifier Q>
-		static auto test(glm::vec<S,U,Q> a)->std::true_type;
-		static auto test(...)->std::false_type;
-	public:
-		static constexpr bool value = decltype(is_static_array::test(T()))::value;
-	};
+	template<typename T>
+	using array_type = refrakt::fixed_vector<T>;
+
+	namespace detail {
+		template<typename T> struct is_vector_type_impl {
+		private:
+			template<std::size_t S, typename U, glm::qualifier Q>
+			static auto test(glm::vec<S, U, Q> a)->std::true_type;
+			static auto test(...)->std::false_type;
+		public:
+			static constexpr bool value = decltype(is_vector_type_impl::test(T()))::value;
+		};
+
+		template<typename T> struct is_matrix_type_impl {
+		private:
+			template<std::size_t C, std::size_t R, typename U, glm::qualifier Q>
+			static auto test(glm::mat<C, R, U, Q> a)->std::true_type;
+			static auto test(...)->std::false_type;
+		public:
+			static constexpr bool value = decltype(is_matrix_type_impl::test(T()))::value;
+		};
+
+		template<typename T> struct is_array_type_impl {
+		private:
+			template<typename T>
+			static auto test(array_type<T> a)->std::true_type;
+			static auto test(...)->std::false_type;
+		public:
+			static constexpr bool value = decltype(is_array_type_impl::test(T()))::value;
+		};
+	}
 
 	template<typename T>
-	constexpr bool is_static_array_v = is_static_array<T>::value;
+	constexpr bool is_vector_type = detail::is_vector_type_impl<T>::value;
+
+	template<typename T>
+	constexpr bool is_matrix_type = detail::is_matrix_type_impl<T>::value;
+
+	template<typename T>
+	constexpr bool is_array_type = detail::is_array_type_impl<T>::value;
 
 	template<typename T> 
 	auto type_string(const T& v) -> const std::string { static_assert(std::false_type, "Unknown type"); }
 
+
 	#define USING_WITH_STATIC_ASSERT( name, t, expected ) \
 		using name = t; \
+		using name##_array = array_type<name>; \
 		auto type_string( const name& v ) -> const std::string; \
+		auto type_string( const name##_array& v ) -> const std::string; \
 		static_assert(sizeof(name) == expected, "size mismatch");
 
 	USING_WITH_STATIC_ASSERT(float_t, glm::vec1, 4)
@@ -70,18 +103,22 @@ namespace refrakt {
 		USING_WITH_STATIC_ASSERT(dmat4x3, glm::dmat4x3, 96)
 		USING_WITH_STATIC_ASSERT(dmat4x4, glm::dmat4x4, 128)
 
+		using texture_array = array_type<texture>;
+
+#define ADD_TO_ARG_T_VARIANT(name) name, name##_array
+
 		using arg_t = std::variant<
-		float_t, double_t, int32_t, uint32_t,
-		vec2, dvec2, ivec2, uvec2,
-		vec3, dvec3, ivec3, uvec3,
-		vec4, dvec4, ivec4, uvec4,
-		mat2x2, mat2x3, mat2x4,
-		mat3x2, mat3x3, mat3x4,
-		mat4x2, mat4x3, mat4x4,
-		dmat2x2, dmat2x3, dmat2x4,
-		dmat3x2, dmat3x3, dmat3x4,
-		dmat4x2, dmat4x3, dmat4x4,
-		texture
+		ADD_TO_ARG_T_VARIANT(float_t), ADD_TO_ARG_T_VARIANT(double_t), ADD_TO_ARG_T_VARIANT(int32_t), ADD_TO_ARG_T_VARIANT(uint32_t),
+		ADD_TO_ARG_T_VARIANT(vec2), ADD_TO_ARG_T_VARIANT(dvec2), ADD_TO_ARG_T_VARIANT(ivec2), ADD_TO_ARG_T_VARIANT(uvec2),
+		ADD_TO_ARG_T_VARIANT(vec3), ADD_TO_ARG_T_VARIANT(dvec3), ADD_TO_ARG_T_VARIANT(ivec3), ADD_TO_ARG_T_VARIANT(uvec3),
+		ADD_TO_ARG_T_VARIANT(vec4), ADD_TO_ARG_T_VARIANT(dvec4), ADD_TO_ARG_T_VARIANT(ivec4), ADD_TO_ARG_T_VARIANT(uvec4),
+		ADD_TO_ARG_T_VARIANT(mat2x2), ADD_TO_ARG_T_VARIANT(mat2x3), ADD_TO_ARG_T_VARIANT(mat2x4),
+		ADD_TO_ARG_T_VARIANT(mat3x2), ADD_TO_ARG_T_VARIANT(mat3x3), ADD_TO_ARG_T_VARIANT(mat3x4),
+		ADD_TO_ARG_T_VARIANT(mat4x2), ADD_TO_ARG_T_VARIANT(mat4x3), ADD_TO_ARG_T_VARIANT(mat4x4),
+		ADD_TO_ARG_T_VARIANT(dmat2x2), ADD_TO_ARG_T_VARIANT(dmat2x3), ADD_TO_ARG_T_VARIANT(dmat2x4),
+		ADD_TO_ARG_T_VARIANT(dmat3x2), ADD_TO_ARG_T_VARIANT(dmat3x3), ADD_TO_ARG_T_VARIANT(dmat3x4),
+		ADD_TO_ARG_T_VARIANT(dmat4x2), ADD_TO_ARG_T_VARIANT(dmat4x3), ADD_TO_ARG_T_VARIANT(dmat4x4),
+		ADD_TO_ARG_T_VARIANT(texture)
 		>;
 
 	auto type_string(const texture& arg) -> const std::string;
