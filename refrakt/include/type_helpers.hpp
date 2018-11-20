@@ -52,19 +52,18 @@ namespace refrakt::type_helpers::opengl {
 
 	template<typename Type>
 	void push(GLuint handle, const std::string& name, const Type& value) {
-		auto location = glGetUniformLocation(handle, name.c_str());
-
 		if constexpr (is_vector_type<Type>) 
-			(*detail::pusher<Type>)(location, 1, (typename Type::value_type*) &value);
+			(*detail::pusher<Type>)(glGetUniformLocation(handle, name.c_str()), 1, (typename Type::value_type*) &value);
 		else if constexpr (is_matrix_type<Type>) 
-			(*detail::pusher<Type>)(location, 1, false, (typename Type::value_type*) &value);
+			(*detail::pusher<Type>)(glGetUniformLocation(handle, name.c_str()), 1, false, (typename Type::value_type*) &value);
 		else if constexpr (is_array_type<Type>) {
-			auto size_location = glGetUniformLocation(handle, (name + "_size").c_str());
-			auto size = value.max_size();
+			auto data_location = glGetUniformLocation(handle, (name + ".d").c_str());
+			auto size_location = glGetUniformLocation(handle, (name + ".s").c_str());
+			auto max_size = value.max_size();
 			if constexpr(is_vector_type<Type::value_type>)
-				(*detail::pusher<Type>)(location, size, (typename Type::value_type::value_type*) value.data());
+				(*detail::pusher<Type>)(data_location, max_size, (typename Type::value_type::value_type*) value.data());
 			else if constexpr (is_matrix_type<Type::value_type>)
-				(*detail::pusher<Type>)(location, size, false, (typename Type::value_type::value_type*) value.data());
+				(*detail::pusher<Type>)(data_location, max_size, false, (typename Type::value_type::value_type*) value.data());
 
 			glUniform1ui(size_location, value.size());
 		}
@@ -85,13 +84,21 @@ namespace refrakt::type_helpers::imgui {
 
 	template< std::size_t S, typename T, glm::qualifier Q >
 	bool display(glm::vec<S,T,Q> & value, const std::string& description, refrakt::dvec2 bounds, const float speed) {
-		if constexpr(!std::is_arithmetic_v<T>) return false;
-		else {
-			const T min_val = static_cast<T>(bounds[0]);
-			const T max_val = static_cast<T>(bounds[1]);
+		const T min_val = static_cast<T>(bounds[0]);
+		const T max_val = static_cast<T>(bounds[1]);
 
-			return ImGui::DragScalarN(description.c_str(), scalar_flag<T>(), &value[0], S, speed, &min_val, &max_val);
+		return ImGui::DragScalarN(description.c_str(), scalar_flag<T>(), &value[0], S, speed, &min_val, &max_val);
+	}
+
+	template<typename T>
+	bool display(refrakt::fixed_vector<T>& value, const std::string& description, refrakt::dvec2 bounds, const float speed) {
+		std::size_t pos = 0;
+		bool any_changed = false;
+		for (T& v : value) {
+			any_changed |= display(value, description + "[" + std::to_string(pos++) + "]", bounds, speed);
 		}
+
+		return any_changed;
 	}
 
 	bool display(refrakt::arg_t& value, const std::string& description, refrakt::dvec2 bounds, const float speed);

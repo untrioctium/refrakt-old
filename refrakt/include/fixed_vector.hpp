@@ -1,6 +1,7 @@
 #include <stdexcept>
 #include <string>
 #include <cstring>
+#include <iostream>
 
 namespace refrakt {
 	template<typename T>
@@ -80,15 +81,33 @@ namespace refrakt {
 		using reverse_iterator = std::reverse_iterator<iterator>;
 		using const_reverse_iterator = std::reverse_iterator<const_iterator>;
 
-		fixed_vector(std::size_t size) : max_size_(size), size_(0) {
+		fixed_vector(std::size_t size) : max_size_(size), size_(0), should_delete_(true) {
 			data_ = new T[size];
 		}
 
-		~fixed_vector() {
-			delete[] data_;
+		fixed_vector(const fixed_vector& o) {
+			data_ = new T[o.max_size_];
+			std::memcpy(data_, o.data_, sizeof(T) * o.max_size_);
+
+			max_size_ = o.max_size_;
+			size_ = o.size_;
+			should_delete_ = true;
 		}
 
-		fixed_vector() : fixed_vector(1) {};
+		fixed_vector(fixed_vector&& o) {
+			data_ = o.data_;
+			max_size_ = o.max_size_;
+			size_ = o.size_;
+			should_delete_ = true;
+			o.should_delete_ = false;
+		}
+
+		~fixed_vector() {
+			if( should_delete_ )
+				delete[] data_;
+		}
+
+		fixed_vector() : fixed_vector(1) {}
 
 		iterator begin() noexcept { return iterator(data_); }
 		const_iterator begin() const noexcept { return const_iterator(data_); }
@@ -109,16 +128,19 @@ namespace refrakt {
 			if (size_ + 1 > max_size_) throw std::length_error(std::string("attempt to increase fixed_vector size beyond ") + std::to_string(max_size_));
 			memmove( pos.ptr_ + 1, pos.ptr_, sizeof(T) * (data_ + size_ - pos.ptr_) );
 
-			std::cout << "moved " << end().ptr_ - pos.ptr_ << " elements" << std::endl;
 			*pos = T(value);
 			size_++;
-			return iterator(pos.operator->());
+			return iterator(pos.ptr_);
 		}
 
 		void assign( std::initializer_list<T> ilist ) {
-			if( ilist.size() > max_size_ ) throw std::length_error("whoops");
+			/*if (ilist.size() > max_size_)
+				throw std::length_error(
+					"attempt to initialize " + std::to_string(max_size_) + 
+					" max length fixed_vector from list of size" +
+					std::to_string(ilist.size()));*/
 
-			memcpy( data_, ilist.begin(), sizeof(T) * ilist.size() );
+			memcpy( data_, ilist.begin(), sizeof(T) * std::min(ilist.size(), max_size_));
 			size_ = ilist.size();
 		}
 
@@ -129,8 +151,7 @@ namespace refrakt {
 
 		void push_back(const value_type& val) {
 			if (size_ + 1 > max_size_) throw std::length_error(std::string("attempt to increase fixed_vector size beyond ") + std::to_string(max_size_));
-			data_[size_] = T(val);
-			size_++;
+			data_[size_++] = T(val);
 		}
 
 		void pop_back() { if (size_ > 0) size_--; }
@@ -139,6 +160,8 @@ namespace refrakt {
 	private:
 		std::size_t size_;
 		std::size_t max_size_;
+
+		bool should_delete_;
 
 		T* data_;
 	};

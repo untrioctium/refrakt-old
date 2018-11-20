@@ -169,6 +169,9 @@ public:
 
 		animator.script("function animate(t) end");
 
+		refrakt::lua::modules::load(test_repl.globals(), "global");
+		test_repl.open_libraries();
+
 		stbi_flip_vertically_on_write(true);
 		stbi_write_png_compression_level = 1;
 
@@ -249,6 +252,37 @@ public:
 	bool tss = false;
 
 	std::array<char, 1024 * 16> animator_script = { '\0' };
+
+	void repl_window() {
+		static char input[1024] = { 0 };
+		static std::string log;
+		ImGui::Begin("Test REPL");
+		ImGui::PushFont(ImGui::GetIO().Fonts->Fonts[1]);
+		if (ImGui::InputText("Command", input, sizeof(input), ImGuiInputTextFlags_EnterReturnsTrue)) {
+			std::string error;
+			auto result = test_repl.safe_script(input, [&](lua_State*, sol::protected_function_result pfr) {
+				sol::error e = pfr;
+				error = e.what();
+				return pfr;
+			});
+			log += "\n> " + std::string(input) + "\n";
+			if (result.valid()) {
+				log += result.operator std::string();
+			}
+			else log += error.substr(error.find("]:1: ") + 4);
+
+			input[0] = 0;
+			ImGui::SetKeyboardFocusHere(-1);
+		}
+		ImGui::Separator();
+		ImGui::BeginChild("Log");
+		
+		ImGui::TextUnformatted(log.c_str());
+		ImGui::PopFont();
+		ImGui::EndChild();
+
+		ImGui::End();
+	}
 
 	void animation_window() {
 		ImGui::Begin("Animation");
@@ -395,6 +429,7 @@ public:
 		ImGui::ShowDemoWindow();
 		animation_window();
 		capture_window();
+		repl_window();
 
 		float frame_height = ImGui::GetFontSize() + ImGui::GetStyle().FramePadding.y * 2;
 
@@ -566,6 +601,8 @@ private:
 	std::unique_ptr<refrakt::widget> escape, blur;
 
 	sol::state animator;
+
+	sol::state test_repl;
 
 	refrakt::texture_handle out_tex;
 

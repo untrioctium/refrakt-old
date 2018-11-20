@@ -76,11 +76,30 @@ struct mod_refrakt : refrakt::lua::modules::registrar<mod_refrakt> {
 	template<typename Base, typename Constructor, typename... Ts>
 	static auto base_type_apply(Ts... args) {
 		std::string name = refrakt::type_string(Base{});
+		std::string array_name = refrakt::type_string(refrakt::fixed_vector<Base>{});
+
 		return [=](sol::table to) {
+			using array_t = refrakt::fixed_vector<Base>;
+
 			to.new_usertype<Base>(name,
 				sol::call_constructor, Constructor(),
 				"type", sol::property([name]() {return name; }),
+				"array", [](std::size_t max_size, sol::table init) {
+					array_t vec(max_size);
+					std::size_t init_size = std::min(max_size, init.size());
+					for (std::size_t i = 1; i <= init_size; i++)
+						vec.push_back(init[i].get<Base>());
+
+					return vec;
+				},
 				args...);
+			to.new_usertype<array_t>(array_name, 
+				sol::call_constructor, sol::no_constructor,
+				"type", sol::property([array_name]() { return array_name; }),
+				"max_size", sol::property(&array_t::max_size),
+				"append", [](array_t& a, const Base& v) { a.push_back(v); }
+			);
+
 		};
 	}
 
