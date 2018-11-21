@@ -140,6 +140,9 @@
     <None Include="..\widgets\blur.frag">
       <Filter>Widgets</Filter>
     </None>
+    <None Include="..\widgets\newton.frag">
+      <Filter>Widgets</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\factory.hpp">

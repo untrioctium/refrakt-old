@@ -81,24 +81,23 @@ namespace refrakt {
 		using reverse_iterator = std::reverse_iterator<iterator>;
 		using const_reverse_iterator = std::reverse_iterator<const_iterator>;
 
-		fixed_vector(std::size_t size) : max_size_(size), size_(0), should_delete_(true) {
-			data_ = new T[size];
-		}
+		fixed_vector(std::size_t size) : 
+			max_size_(size), 
+			size_(0), 
+			should_delete_(true),
+			data_(new T[size]) {}
 
-		fixed_vector(const fixed_vector& o) {
-			data_ = new T[o.max_size_];
+		fixed_vector(const fixed_vector& o) : 
+			data_(new T[o.max_size_]),
+			max_size_(o.max_size_),
+			size_(o.size_),
+			should_delete_(true){
 			std::memcpy(data_, o.data_, sizeof(T) * o.max_size_);
-
-			max_size_ = o.max_size_;
-			size_ = o.size_;
-			should_delete_ = true;
 		}
 
-		fixed_vector(fixed_vector&& o) {
-			data_ = o.data_;
-			max_size_ = o.max_size_;
-			size_ = o.size_;
-			should_delete_ = true;
+		fixed_vector(fixed_vector&& o): data_(o.data_), 
+			max_size_(o.max_size_), size_(o.size_),
+			should_delete_(true) {
 			o.should_delete_ = false;
 		}
 
@@ -118,10 +117,10 @@ namespace refrakt {
 		const_iterator cend() noexcept { return const_iterator(data_ + size_); }
 
 		T* data() noexcept { return data_; }
-
-		bool empty() { return size_ == 0; }
-		std::size_t size() { return size_; }
-		std::size_t max_size() { return max_size_; }
+		const T* data() const noexcept { return data_;  }
+		bool empty() const { return size_ == 0; }
+		std::size_t size() const { return size_; }
+		std::size_t max_size() const { return max_size_; }
 
 		void clear() noexcept { size_ = 0; }
 		iterator insert( iterator pos, const T& value ) {
@@ -147,6 +146,10 @@ namespace refrakt {
 		auto operator=( std::initializer_list<T> ilist ) {
 			assign(ilist);
 			return *this;
+		}
+
+		T& operator[](std::size_t index) {
+			return *(data_ + index);
 		}
 
 		void push_back(const value_type& val) {

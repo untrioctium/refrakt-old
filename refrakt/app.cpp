@@ -80,12 +80,17 @@ class app {
 public:
 	bool init(std::vector<std::string> argc) {
 
+		int count;
+		GLFWmonitor** monitors = glfwGetMonitors(&count);
+		for (int i = 0; i < count; i++)
+			std::cout << glfwGetMonitorName(monitors[i]) << std::endl;
+
 		glfwSetErrorCallback(glfw_error);
 
 		nlohmann::json settings;
 		std::ifstream("settings.json") >> settings;
 
-		if(!glfwInit()) return false;
+		if (!glfwInit()) return false;
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 		glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
@@ -133,11 +138,16 @@ public:
 		escape = refrakt::widget::make("glsl_widget");
 		escape->setup({
 			{"widget", {{"source", "escape.frag"}}}
-		});
+			});
 
 		blur = refrakt::widget::make("glsl_widget");
 		blur->setup({
 			{"widget", {{"source", "blur.frag"}}}
+			});
+
+		newton = refrakt::widget::make("glsl_widget");
+		newton->setup({
+			{"widget", {{"source", "newton.frag"}}}
 			});
 
 		setup_quad_drawer();
@@ -145,6 +155,11 @@ public:
 		GLuint vao;
 		glGenVertexArrays(1, &vao);
 		glBindVertexArray(vao);
+
+		roots.push_back({ .25, .25, 1.0, 0.0 });
+		roots.push_back({ -.25, .25, 1.0, 0.0 });
+		roots.push_back({ .25, -.25, 1.0, 0.0 });
+		roots.push_back({ -.25, -.25, 1.0, 0.0 });
 
 		refrakt::lua::modules::load(animator.globals(), "global");
 		animator.open_libraries(sol::lib::math, sol::lib::base);
@@ -177,7 +192,7 @@ public:
 
 		last_time = glfwGetTime();
 		while (frame()) {}
-		
+
 		ImGui_ImplOpenGL3_Shutdown();
 		ImGui_ImplGlfw_Shutdown();
 		ImGui::DestroyContext();
@@ -236,7 +251,7 @@ public:
 	void show_main_menu() {
 		if (ImGui::BeginMainMenuBar()) {
 
-			ImGui::Text("Press ~ to hide guis. Press F1 to toggle fullscreen. (%.3f MB VRAM) (%.0f FPS)", 
+			ImGui::Text("Press ~ to hide guis. Press F1 to toggle fullscreen. (%.3f MB VRAM) (%.0f FPS)",
 				refrakt::events::gl_calc_vram_usage::fire() / 1048576.0, ImGui::GetIO().Framerate);
 
 			ImGui::EndMainMenuBar();
@@ -276,7 +291,7 @@ public:
 		}
 		ImGui::Separator();
 		ImGui::BeginChild("Log");
-		
+
 		ImGui::TextUnformatted(log.c_str());
 		ImGui::PopFont();
 		ImGui::EndChild();
@@ -308,14 +323,14 @@ public:
 
 		static double new_time = 0.0;
 
-		if (ImGui::Button((std::string(paused ? "Resume" : "Pause ") + "##pause").c_str())) { paused ^= true;} ImGui::SameLine();
+		if (ImGui::Button((std::string(paused ? "Resume" : "Pause ") + "##pause").c_str())) { paused ^= true; } ImGui::SameLine();
 		if (ImGui::Button("Reset to zero.")) { time = 0; need_update = true; }; ImGui::SameLine();
 		if (ImGui::Button("Set to: ")) { time = new_time; need_update = true; } ImGui::SameLine();
 
 		ImGui::InputDouble("##newtime", &new_time, .01, .1, "%.10f");
 		ImGui::Separator();
 		ImGui::Text("Animator");
-		
+
 		ImGui::PushFont(ImGui::GetIO().Fonts->Fonts[1]);
 		ImGui::InputTextMultiline("##animator", animator_script.data(), sizeof(animator_script), { -1.0f, ImGui::GetTextLineHeight() * 16 }, ImGuiInputTextFlags_AllowTabInput);
 		ImGui::PopFont();
@@ -358,7 +373,7 @@ public:
 	}
 
 	void render(double t, refrakt::texture_handle tex) {
-		if( !paused ) animator["animate"](t);
+		/*if( !paused ) animator["animate"](t);
 
 		refrakt::widget::param_t in{
 			{ "center", animator["center"].get<refrakt::vec2>() },
@@ -387,7 +402,18 @@ public:
 			{"color", *tex}
 		};
 
-		escape->run(in, out);
+		escape->run(in, out);*/
+
+		refrakt::widget::param_t in{
+			{"roots", roots},
+			{"eccentricity", eccentricity}
+		};
+
+		refrakt::widget::param_t out{
+			{"color", *tex}
+		};
+
+		newton->run(in, out);
 		glFinish();
 	}
 
@@ -427,8 +453,8 @@ public:
 		ImGui::NewFrame();
 
 		ImGui::ShowDemoWindow();
-		animation_window();
-		capture_window();
+		//animation_window();
+		//capture_window();
 		repl_window();
 
 		float frame_height = ImGui::GetFontSize() + ImGui::GetStyle().FramePadding.y * 2;
@@ -453,7 +479,7 @@ public:
 
 		if (!out_tex || out_tex->info().w != size.x || out_tex->info().h != size.y) {
 			need_update = true;
-			out_tex = pool.request(static_cast<std::size_t>( size.x ), static_cast<std::size_t>(size.y), refrakt::texture::format::Float, 4, 2);
+			out_tex = pool.request(static_cast<std::size_t>(size.x), static_cast<std::size_t>(size.y), refrakt::texture::format::Float, 4, 2);
 		}
 		auto now = glfwGetTime();
 		if (!paused || need_update) {
@@ -470,7 +496,9 @@ public:
 		auto& jul = animator["julia_c"].get<refrakt::vec2>();
 
 		ImGui::Begin("Parameters");
-		need_update |= refrakt::type_helpers::imgui::display(center, "center", refrakt::dvec2{ -5.0, 5.0 }, .001);
+		need_update |= refrakt::type_helpers::imgui::display(roots, "roots", { -1.0, 1.0 }, .001);
+		need_update |= refrakt::type_helpers::imgui::display(eccentricity, "eccentricity", { 0.01, 2.0 }, .0001);
+		/*need_update |= refrakt::type_helpers::imgui::display(center, "center", refrakt::dvec2{ -5.0, 5.0 }, .001);
 		need_update |= refrakt::type_helpers::imgui::display(scale, "scale", refrakt::dvec2{ .5, 1000.0 }, .05);
 		need_update |= refrakt::type_helpers::imgui::display(rot, "rotation", refrakt::dvec2{ -360, 360 }, .05);
 		need_update |= refrakt::type_helpers::imgui::display(animator["hue_shift"].get<refrakt::float_t>(), "hue_shift", refrakt::dvec2{ 0, 1 }, .0001);
@@ -516,6 +544,7 @@ public:
 		table = "\t{\n" + table + "\t}";
 
 		ImGui::InputTextMultiline("Table", table.data(), table.size(), ImVec2(0, 0), ImGuiInputTextFlags_ReadOnly);
+		*/
 
 		ImGui::End();
 		if (need_update) {
@@ -536,7 +565,8 @@ public:
 				blur->run(in, out);
 
 
-			} else 	render(time, out_tex);
+			}
+			else 	render(time, out_tex);
 		}
 
 		//glfwMakeContextCurrent(window);
@@ -556,7 +586,7 @@ public:
 		GLuint image = out_tex->handle();
 		ImGui::Image((void*)std::size_t{ image }, size, ImVec2(0, 1), ImVec2(1, 0), ImVec4(1, 1, 1, 1), ImVec4(0, 0, 0, 0));
 		ImGui::End();
-		
+
 		ImGui::Render();
 		int display_w, display_h;
 		//glfwMakeContextCurrent(window);
@@ -598,8 +628,10 @@ private:
 	GLuint prog_;
 
 	refrakt::texture_pool pool;
-	std::unique_ptr<refrakt::widget> escape, blur;
+	std::unique_ptr<refrakt::widget> escape, blur, newton;
 
+	refrakt::vec4_array roots = refrakt::vec4_array(16);
+	refrakt::float_t eccentricity = refrakt::float_t(1.0);
 	sol::state animator;
 
 	sol::state test_repl;
@@ -611,6 +643,33 @@ private:
 int main(int argc, char** argv) {
 	std::vector<std::string> arg;
 	for (int i = 0; i < argc; i++) arg.push_back(argv[i]);
+
+	if (arg.size() > 1 && arg[1] == "repl") {
+		sol::state repl;
+		refrakt::lua::modules::load(repl.globals(), "global");
+		repl.open_libraries();
+
+		std::string input;
+
+		while (true) {
+			std::cout << "> ";
+			std::getline(std::cin, input);
+
+			if (input == "exit") return 0;
+
+			std::string error;
+			auto result = repl.safe_script(input, [&](lua_State*, sol::protected_function_result pfr) {
+				sol::error e = pfr;
+				error = e.what();
+				return pfr;
+			});
+			if (result.valid()) {
+				std::cout << result.operator std::string();
+			}
+			else std::cout << error.substr(error.find("]:1: ") + 4);
+			std::cout << std::endl;
+		}
+	}
 
 	app rfkt;
 	if (!rfkt.init(arg)) {

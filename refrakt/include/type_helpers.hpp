@@ -1,5 +1,6 @@
 #pragma once
 
+#include <iostream>
 #include <GL/glew.h>
 #include <imgui.h>
 
@@ -28,24 +29,24 @@ namespace refrakt::type_helpers::opengl {
 		template<> const auto pusher<refrakt::dvec4> = &glUniform4dv;
 		template<> const auto pusher<refrakt::ivec4> = &glUniform4iv;
 		template<> const auto pusher<refrakt::uvec4> = &glUniform4uiv;
-		template<> const auto pusher<refrakt::mat2x2> = &glUniformMatrix2fv;
+		template<> const auto pusher<refrakt::mat2> = &glUniformMatrix2fv;
 		template<> const auto pusher<refrakt::mat2x3> = &glUniformMatrix2x3fv;
 		template<> const auto pusher<refrakt::mat2x4> = &glUniformMatrix2x4fv;
 		template<> const auto pusher<refrakt::mat3x2> = &glUniformMatrix3x2fv;
-		template<> const auto pusher<refrakt::mat3x3> = &glUniformMatrix3fv;
+		template<> const auto pusher<refrakt::mat3> = &glUniformMatrix3fv;
 		template<> const auto pusher<refrakt::mat3x4> = &glUniformMatrix3x4fv;
 		template<> const auto pusher<refrakt::mat4x2> = &glUniformMatrix4x2fv;
 		template<> const auto pusher<refrakt::mat4x3> = &glUniformMatrix4x3fv;
-		template<> const auto pusher<refrakt::mat4x4> = &glUniformMatrix4fv;
-		template<> const auto pusher<refrakt::dmat2x2> = &glUniformMatrix2dv;
+		template<> const auto pusher<refrakt::mat4> = &glUniformMatrix4fv;
+		template<> const auto pusher<refrakt::dmat2> = &glUniformMatrix2dv;
 		template<> const auto pusher<refrakt::dmat2x3> = &glUniformMatrix2x3dv;
 		template<> const auto pusher<refrakt::dmat2x4> = &glUniformMatrix2x4dv;
 		template<> const auto pusher<refrakt::dmat3x2> = &glUniformMatrix3x2dv;
-		template<> const auto pusher<refrakt::dmat3x3> = &glUniformMatrix3dv;
+		template<> const auto pusher<refrakt::dmat3> = &glUniformMatrix3dv;
 		template<> const auto pusher<refrakt::dmat3x4> = &glUniformMatrix3x4dv;
 		template<> const auto pusher<refrakt::dmat4x2> = &glUniformMatrix4x2dv;
 		template<> const auto pusher<refrakt::dmat4x3> = &glUniformMatrix4x3dv;
-		template<> const auto pusher<refrakt::dmat4x4> = &glUniformMatrix4dv;
+		template<> const auto pusher<refrakt::dmat4> = &glUniformMatrix4dv;
 	}
 
 	void push(GLuint handle, const std::string& name, const refrakt::arg_t& value);
@@ -59,11 +60,12 @@ namespace refrakt::type_helpers::opengl {
 		else if constexpr (is_array_type<Type>) {
 			auto data_location = glGetUniformLocation(handle, (name + ".d").c_str());
 			auto size_location = glGetUniformLocation(handle, (name + ".s").c_str());
+			std::cout << "pushing " << name << std::endl;
 			auto max_size = value.max_size();
 			if constexpr(is_vector_type<Type::value_type>)
-				(*detail::pusher<Type>)(data_location, max_size, (typename Type::value_type::value_type*) value.data());
+				(*detail::pusher<Type::value_type>)(data_location, max_size, (typename Type::value_type::value_type*) value.data());
 			else if constexpr (is_matrix_type<Type::value_type>)
-				(*detail::pusher<Type>)(data_location, max_size, false, (typename Type::value_type::value_type*) value.data());
+				(*detail::pusher<Type::value_type>)(data_location, max_size, false, (typename Type::value_type::value_type*) value.data());
 
 			glUniform1ui(size_location, value.size());
 		}
@@ -95,7 +97,8 @@ namespace refrakt::type_helpers::imgui {
 		std::size_t pos = 0;
 		bool any_changed = false;
 		for (T& v : value) {
-			any_changed |= display(value, description + "[" + std::to_string(pos++) + "]", bounds, speed);
+			any_changed |= display(value[pos], description + "[" + std::to_string(pos) + "]", bounds, speed);
+			pos++;
 		}
 
 		return any_changed;

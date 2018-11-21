@@ -29,13 +29,12 @@ struct mod_refrakt : refrakt::lua::modules::registrar<mod_refrakt> {
 		apply_vec<refrakt::dvec4>(mod);
 		apply_vec<refrakt::ivec4>(mod);
 		apply_vec<refrakt::uvec4>(mod);
-		
-		mod.new_usertype<refrakt::texture>("texture",
-			"type", sol::property([]() {return "texture"; }),
+
+		base_type_apply<refrakt::texture, sol::no_construction>(
 			"handle", sol::property(&refrakt::texture::handle),
 			"w", sol::property([](const refrakt::texture& t) {return t.info().w; }),
 			"h", sol::property([](const refrakt::texture& t) {return t.info().h; })
-		);
+		)(mod);
 
 		mod["mix"] = sol::overload(
 			refrakt::type_helpers::mix<refrakt::float_t>,
@@ -97,7 +96,9 @@ struct mod_refrakt : refrakt::lua::modules::registrar<mod_refrakt> {
 				sol::call_constructor, sol::no_constructor,
 				"type", sol::property([array_name]() { return array_name; }),
 				"max_size", sol::property(&array_t::max_size),
-				"append", [](array_t& a, const Base& v) { a.push_back(v); }
+				"append", [](array_t& a, const Base& v) { a.push_back(v); },
+				sol::meta_function::index, &array_t::operator[],
+				sol::meta_function::length, &array_t::size
 			);
 
 		};
@@ -105,20 +106,25 @@ struct mod_refrakt : refrakt::lua::modules::registrar<mod_refrakt> {
 
 	template<typename vec>
 	static void apply_vec(sol::table mod) {
+		static auto indexer = [](vec& v, typename vec::length_type idx) -> typename vec::value_type& {
+			return v[idx];
+		};
+
 		if constexpr (vec::length() == 1) {
 			base_type_apply<vec,
 				sol::constructors<
 				vec(),
 				vec(vec::value_type)>
-			>("x", &vec::x)(mod);
+			>(sol::meta_function::index, indexer, "x", &vec::x)(mod);
 		}
+
 		else if constexpr (vec::length() == 2) {
 			base_type_apply<vec,
 				sol::constructors<
 				vec(),
 				vec(vec::value_type),
 				vec(vec::value_type, vec::value_type)>
-			>("x", &vec::x, "y", &vec::y)(mod);
+			>(sol::meta_function::index, indexer, "x", &vec::x, "y", &vec::y)(mod);
 		}
 		else if constexpr (vec::length() == 3) {
 			base_type_apply<vec,
@@ -126,7 +132,7 @@ struct mod_refrakt : refrakt::lua::modules::registrar<mod_refrakt> {
 				vec(),
 				vec(vec::value_type),
 				vec(vec::value_type, vec::value_type, vec::value_type)>
-			>("x", &vec::x, "y", &vec::y, "z", &vec::z)(mod);
+			>(sol::meta_function::index, indexer, "x", &vec::x, "y", &vec::y, "z", &vec::z)(mod);
 		}
 		else if constexpr (vec::length() == 4) {
 			base_type_apply<vec,
@@ -134,7 +140,7 @@ struct mod_refrakt : refrakt::lua::modules::registrar<mod_refrakt> {
 				vec(),
 				vec(vec::value_type),
 				vec(vec::value_type, vec::value_type, vec::value_type, vec::value_type)>
-			>("x", &vec::x, "y", &vec::y, "z", &vec::z, "w", &vec::w)(mod);
+			>(sol::meta_function::index, indexer, "x", &vec::x, "y", &vec::y, "z", &vec::z, "w", &vec::w)(mod);
 		}
 	}
 };

@@ -83,7 +83,7 @@ public:
 			std::visit([name = kv.first, this, &bound_input_textures](auto&& v) {
 				using type = std::decay_t<decltype(v)>;
 
-				if constexpr(refrakt::is_vector_type<type>)
+				if constexpr(refrakt::is_vector_type<type> || refrakt::is_matrix_type<type> || refrakt::is_array_type<type>)
 					refrakt::type_helpers::opengl::push(prog_, name, v);
 				else if constexpr(std::is_same_v<type, refrakt::texture>) {
 					GLint location = glGetUniformLocation(prog_, name.c_str());
