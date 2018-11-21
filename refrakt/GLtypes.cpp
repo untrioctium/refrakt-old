@@ -5,7 +5,9 @@
 #include "type_helpers.hpp"
 
 namespace /*type_string*/ refrakt {
-#define MAKE_TYPE_STRING_FUNCTION(name) auto type_string( const name& value ) -> const std::string { return #name; }
+#define MAKE_TYPE_STRING_FUNCTION(name) \
+	auto type_string( const name& value ) -> const std::string { return #name; } \
+	auto type_string( const name##_array& value ) -> const std::string { return #name"_array"; }
 
 	auto type_string(const arg_t& arg) -> const std::string {
 		return std::visit([](auto&& v) -> const std::string {
@@ -17,8 +19,12 @@ namespace /*type_string*/ refrakt {
 	auto type_string(const refrakt::double_t&) -> const std::string { return "double"; }
 	auto type_string(const refrakt::int32_t&) -> const std::string { return "int32"; }
 	auto type_string(const refrakt::uint32_t&) -> const std::string { return "uint32"; }
-	auto type_string(const texture_handle&) -> const std::string { return "texture_handle"; }
-	auto type_string(const texture&) -> const std::string { return "texture"; }
+	auto type_string(const refrakt::float_t_array&) -> const std::string { return "float_array"; }
+	auto type_string(const refrakt::double_t_array&) -> const std::string { return "double_array"; }
+	auto type_string(const refrakt::int32_t_array&) -> const std::string { return "int32_array"; }
+	auto type_string(const refrakt::uint32_t_array&) -> const std::string { return "uint32_array"; }
+
+	MAKE_TYPE_STRING_FUNCTION(texture);
 
 	MAKE_TYPE_STRING_FUNCTION(vec2);
 	MAKE_TYPE_STRING_FUNCTION(dvec2);
@@ -35,25 +41,25 @@ namespace /*type_string*/ refrakt {
 	MAKE_TYPE_STRING_FUNCTION(ivec4);
 	MAKE_TYPE_STRING_FUNCTION(uvec4);
 
-	MAKE_TYPE_STRING_FUNCTION(mat2x2);
+	MAKE_TYPE_STRING_FUNCTION(mat2);
 	MAKE_TYPE_STRING_FUNCTION(mat2x3);
 	MAKE_TYPE_STRING_FUNCTION(mat2x4);
 	MAKE_TYPE_STRING_FUNCTION(mat3x2);
-	MAKE_TYPE_STRING_FUNCTION(mat3x3);
+	MAKE_TYPE_STRING_FUNCTION(mat3);
 	MAKE_TYPE_STRING_FUNCTION(mat3x4);
 	MAKE_TYPE_STRING_FUNCTION(mat4x2);
 	MAKE_TYPE_STRING_FUNCTION(mat4x3);
-	MAKE_TYPE_STRING_FUNCTION(mat4x4);
+	MAKE_TYPE_STRING_FUNCTION(mat4);
 
-	MAKE_TYPE_STRING_FUNCTION(dmat2x2);
+	MAKE_TYPE_STRING_FUNCTION(dmat2);
 	MAKE_TYPE_STRING_FUNCTION(dmat2x3);
 	MAKE_TYPE_STRING_FUNCTION(dmat2x4);
 	MAKE_TYPE_STRING_FUNCTION(dmat3x2);
-	MAKE_TYPE_STRING_FUNCTION(dmat3x3);
+	MAKE_TYPE_STRING_FUNCTION(dmat3);
 	MAKE_TYPE_STRING_FUNCTION(dmat3x4);
 	MAKE_TYPE_STRING_FUNCTION(dmat4x2);
 	MAKE_TYPE_STRING_FUNCTION(dmat4x3);
-	MAKE_TYPE_STRING_FUNCTION(dmat4x4);
+	MAKE_TYPE_STRING_FUNCTION(dmat4);
 }
 
 namespace /*json*/ refrakt {
@@ -67,7 +73,7 @@ namespace /*json*/ refrakt {
 			std::visit([&](auto&& arg) {
 				using arg_type = std::decay_t<decltype(arg)>;
 
-				if constexpr(refrakt::is_static_array_v<arg_type>) {
+				if constexpr(refrakt::is_vector_type<arg_type>) {
 					const std::size_t size = std::min( std::size_t(arg.length()), it.value().size() );
 					for (std::size_t i = 0; i < size; i++)
 						arg[i] = it.value()[i].get<arg_type::value_type>();

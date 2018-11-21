@@ -155,6 +155,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\settings.json" />
+    <None Include="..\widgets\newton.frag" />
     <None Include="..\widgets\base\opengl_fragment.lua" />
     <None Include="..\widgets\blur.frag" />
     <None Include="..\widgets\density.frag" />
@@ -169,6 +170,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\factory.hpp" />
+    <ClInclude Include="include\fixed_vector.hpp" />
     <ClInclude Include="include\global_events.hpp" />
     <ClInclude Include="include\GLtypes.hpp" />
     <ClInclude Include="include\log.hpp" />

@@ -140,6 +140,9 @@
     <None Include="..\widgets\blur.frag">
       <Filter>Widgets</Filter>
     </None>
+    <None Include="..\widgets\newton.frag">
+      <Filter>Widgets</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\factory.hpp">
@@ -164,6 +167,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\log.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\fixed_vector.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
